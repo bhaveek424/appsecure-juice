@@ -373,3 +373,61 @@ progress {
   font-size: 0.82rem;
   font-family: "IBM Plex Mono", ui-monospace, monospace;
 }
+
+.skill-runs {
+  margin-top: 1.25rem;
+}
+
+.skill-runs h4 {
+  margin: 0 0 0.75rem;
+  font-size: 0.95rem;
+}
+
+.skill-runs-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 0.85rem;
+}
+
+.skill-run-card {
+  border: 1px solid #243044;
+  border-radius: 10px;
+  padding: 0.85rem 1rem;
+  background: #0f1419;
+}
+
+.skill-run-header {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-bottom: 0.35rem;
+}
+
+.skill-run-id,
+.skill-run-status,
+.skill-run-outcome {
+  font-size: 0.72rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+.skill-run-outcome {
+  color: #6ee7a8;
+}
+
+.evidence-packet {
+  margin-top: 0.85rem;
+  padding-top: 0.85rem;
+  border-top: 1px solid #243044;
+}
+
+.evidence-packet h5 {
+  margin: 0 0 0.5rem;
+  font-size: 0.9rem;
+}
+
+.hypothesis-card .primary-button {
+  margin-top: 0.75rem;
+}

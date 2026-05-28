@@ -136,6 +136,54 @@ export default function FindingDetailPanel({
             </div>
           </dl>
 
+          {detail.business_logic && (
+            <div className="scanner-detail">
+              <h3>Evidence Packet</h3>
+              <dl>
+                <div>
+                  <dt>Review Skill</dt>
+                  <dd>{detail.business_logic.skill_id}</dd>
+                </div>
+                <div>
+                  <dt>Scenario</dt>
+                  <dd>{detail.business_logic.scenario}</dd>
+                </div>
+                <div>
+                  <dt>Actor Context</dt>
+                  <dd>{detail.business_logic.actor_context}</dd>
+                </div>
+                <div>
+                  <dt>Expected behavior</dt>
+                  <dd>{detail.business_logic.expected_behavior}</dd>
+                </div>
+                <div>
+                  <dt>Observed behavior</dt>
+                  <dd>{detail.business_logic.observed_behavior}</dd>
+                </div>
+                <div>
+                  <dt>Request</dt>
+                  <dd>
+                    {detail.business_logic.request_method}{" "}
+                    {detail.business_logic.request_path}
+                  </dd>
+                </div>
+                <div>
+                  <dt>Response status</dt>
+                  <dd>{detail.business_logic.response_status}</dd>
+                </div>
+                <div>
+                  <dt>Reasoning summary</dt>
+                  <dd>{detail.business_logic.reasoning_summary}</dd>
+                </div>
+              </dl>
+              {detail.business_logic.response_excerpt && (
+                <pre className="finding-evidence">
+                  {detail.business_logic.response_excerpt}
+                </pre>
+              )}
+            </div>
+          )}
+
           {detail.scanner && (
             <div className="scanner-detail">
               <h3>Scanner evidence</h3>

@@ -10,16 +10,16 @@ Implement the first bounded Review Skill. The Account Boundary Skill should crea
 
 ## Acceptance criteria
 
-- [ ] Backend can create or reuse User A and User B for a Review Run.
-- [ ] Actor Context is represented as Anonymous, User A, or User B without exposing credentials or tokens.
-- [ ] `POST /api/scans/:id/skills/:skill_id/run` can start the Account Boundary Skill.
-- [ ] Skill run status and outcome are persisted.
-- [ ] Skill probes capture sanitized request/response evidence.
-- [ ] Evidence Packets include skill, scenario, actor context, expected behavior, observed behavior, request details, response status, response excerpt, reasoning summary, and timestamp.
-- [ ] Business Logic Findings are created only when evidence supports an authorization or boundary issue.
-- [ ] Inconclusive results are stored as skill outcomes, not Findings.
-- [ ] Frontend can run the skill and view resulting skill status, finding, or inconclusive outcome.
-- [ ] Backend tests cover evidence sanitization and evidence-gated finding creation.
+- [x] Backend can create or reuse User A and User B for a Review Run.
+- [x] Actor Context is represented as Anonymous, User A, or User B without exposing credentials or tokens.
+- [x] `POST /api/scans/:id/skills/:skill_id/run` can start the Account Boundary Skill.
+- [x] Skill run status and outcome are persisted.
+- [x] Skill probes capture sanitized request/response evidence.
+- [x] Evidence Packets include skill, scenario, actor context, expected behavior, observed behavior, request details, response status, response excerpt, reasoning summary, and timestamp.
+- [x] Business Logic Findings are created only when evidence supports an authorization or boundary issue.
+- [x] Inconclusive results are stored as skill outcomes, not Findings.
+- [x] Frontend can run the skill and view resulting skill status, finding, or inconclusive outcome.
+- [x] Backend tests cover evidence sanitization and evidence-gated finding creation.
 
 ## Blocked by
 

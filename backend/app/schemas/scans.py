@@ -4,6 +4,7 @@ from pydantic import BaseModel, Field
 
 from app.schemas.findings import FindingResponse
 from app.schemas.hypotheses import HypothesisResponse
+from app.schemas.skill_runs import SkillRunResponse
 
 
 class CreateScanRequest(BaseModel):
@@ -38,7 +39,7 @@ class ScanDetail(BaseModel):
     current_step: str
     findings: list[FindingResponse] = Field(default_factory=list)
     hypotheses: list[HypothesisResponse] = Field(default_factory=list)
-    skill_runs: list = Field(default_factory=list)
+    skill_runs: list[SkillRunResponse] = Field(default_factory=list)
 
 
 class ActiveRunConflict(BaseModel):

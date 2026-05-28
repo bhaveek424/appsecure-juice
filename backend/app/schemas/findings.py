@@ -22,6 +22,20 @@ class FindingResponse(BaseModel):
     model_config = {"from_attributes": True}
 
 
+class BusinessLogicEvidenceDetail(BaseModel):
+    skill_id: str
+    scenario: str
+    actor_context: str
+    expected_behavior: str
+    observed_behavior: str
+    request_method: str
+    request_path: str
+    response_status: int
+    response_excerpt: str
+    reasoning_summary: str
+    captured_at: datetime
+
+
 class ScannerFindingDetail(BaseModel):
     alert: str
     description: str
@@ -33,6 +47,7 @@ class ScannerFindingDetail(BaseModel):
 class FindingDetail(FindingResponse):
     review_run_id: str
     scanner: ScannerFindingDetail | None = None
+    business_logic: BusinessLogicEvidenceDetail | None = None
 
 
 class UpdateDispositionRequest(BaseModel):

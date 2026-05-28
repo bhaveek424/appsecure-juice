@@ -2,9 +2,17 @@ import type { Hypothesis } from "./api";
 
 type Props = {
   hypotheses: Hypothesis[];
+  canRunSkills?: boolean;
+  runningSkillId?: string | null;
+  onRunSkill?: (skillId: string) => void;
 };
 
-export default function ReviewQueue({ hypotheses }: Props) {
+export default function ReviewQueue({
+  hypotheses,
+  canRunSkills = false,
+  runningSkillId = null,
+  onRunSkill,
+}: Props) {
   if (hypotheses.length === 0) {
     return <p className="muted">No Hypotheses yet. Agent Triage runs after ZAP.</p>;
   }
@@ -34,6 +42,20 @@ export default function ReviewQueue({ hypotheses }: Props) {
                   .join(", ")}
               </p>
             )}
+            {canRunSkills &&
+              onRunSkill &&
+              hypothesis.recommended_skill_id === "account-boundary" && (
+                <button
+                  type="button"
+                  className="primary-button"
+                  disabled={runningSkillId !== null}
+                  onClick={() => onRunSkill(hypothesis.recommended_skill_id)}
+                >
+                  {runningSkillId === hypothesis.recommended_skill_id
+                    ? "Running…"
+                    : "Run Account Boundary Skill"}
+                </button>
+              )}
           </li>
         ))}
       </ul>

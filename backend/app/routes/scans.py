@@ -10,8 +10,15 @@ from app.schemas.scans import (
     ScanDetail,
     ScanSummary,
 )
+from app.schemas.skill_runs import RunSkillResponse
 from app.services import findings as finding_service
 from app.services import review_runs as review_run_service
+from app.services import skill_runs as skill_run_service
+from app.services.exceptions import (
+    ReviewRunNotFoundError,
+    ReviewRunNotReadyError,
+    UnknownSkillError,
+)
 
 router = APIRouter(prefix="/api/scans", tags=["scans"])
 
@@ -61,6 +68,31 @@ def get_scan(review_run_id: str, db: Session = Depends(get_db)):
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="Review Run not found",
+        ) from exc
+
+
+@router.post(
+    "/{review_run_id}/skills/{skill_id}/run",
+    status_code=status.HTTP_201_CREATED,
+    response_model=RunSkillResponse,
+)
+def run_skill(review_run_id: str, skill_id: str, db: Session = Depends(get_db)):
+    try:
+        return skill_run_service.run_review_skill(db, review_run_id, skill_id)
+    except ReviewRunNotFoundError as exc:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Review Run not found",
+        ) from exc
+    except ReviewRunNotReadyError as exc:
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail="Review Run is not ready for Review Skills",
+        ) from exc
+    except UnknownSkillError as exc:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Unknown Review Skill: {skill_id}",
         ) from exc
 
 

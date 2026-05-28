@@ -5,8 +5,10 @@ from sqlalchemy.orm import Session
 
 from app.domain.review_disposition import ReviewDisposition
 from app.domain.severity import SEVERITY_SORT_ORDER, Severity
+from app.models.evidence_packet import EvidencePacket
 from app.models.finding import Finding
 from app.schemas.findings import (
+    BusinessLogicEvidenceDetail,
     DispositionResponse,
     FindingDetail,
     FindingResponse,
@@ -73,6 +75,33 @@ def _to_response(finding: Finding) -> FindingResponse:
     return FindingResponse.model_validate(finding)
 
 
+def _business_logic_detail(
+    db: Session, finding: Finding
+) -> BusinessLogicEvidenceDetail | None:
+    if finding.source != "Business Logic":
+        return None
+
+    packet = db.scalars(
+        select(EvidencePacket).where(EvidencePacket.finding_id == finding.id)
+    ).first()
+    if packet is None:
+        return None
+
+    return BusinessLogicEvidenceDetail(
+        skill_id=packet.skill_id,
+        scenario=packet.scenario,
+        actor_context=packet.actor_context,
+        expected_behavior=packet.expected_behavior,
+        observed_behavior=packet.observed_behavior,
+        request_method=packet.request_method,
+        request_path=packet.request_path,
+        response_status=packet.response_status,
+        response_excerpt=packet.response_excerpt,
+        reasoning_summary=packet.reasoning_summary,
+        captured_at=packet.captured_at,
+    )
+
+
 def _scanner_detail(finding: Finding) -> ScannerFindingDetail | None:
     if finding.source != "Scanner":
         return None
@@ -85,12 +114,13 @@ def _scanner_detail(finding: Finding) -> ScannerFindingDetail | None:
     )
 
 
-def _to_detail(finding: Finding) -> FindingDetail:
+def _to_detail(db: Session, finding: Finding) -> FindingDetail:
     response = _to_response(finding)
     return FindingDetail(
         **response.model_dump(),
         review_run_id=finding.review_run_id,
         scanner=_scanner_detail(finding),
+        business_logic=_business_logic_detail(db, finding),
     )
 
 
@@ -116,7 +146,7 @@ def get_finding_for_run(
     finding = db.get(Finding, finding_id)
     if finding is None or finding.review_run_id != review_run_id:
         raise FindingNotFoundError
-    return _to_detail(finding)
+    return _to_detail(db, finding)
 
 
 def get_finding(db: Session, finding_id: str) -> Finding:

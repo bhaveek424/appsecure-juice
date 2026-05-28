@@ -26,9 +26,12 @@ def client(monkeypatch):
     import app.db as db_module
     from app.zap.client import MockZapClient
     from app.reasoning import factory as reasoning_factory
+    from app.target.factory import set_target_client
+    from app.target.mock import MockTargetClient
     from app.zap import factory as zap_factory
 
     zap_factory.set_zap_client(MockZapClient())
+    set_target_client(MockTargetClient(boundary_violation=True))
     reasoning_factory.clear_reasoning_client()
     monkeypatch.setattr("app.main.init_db", lambda: None)
 
@@ -53,7 +56,10 @@ def client(monkeypatch):
     with TestClient(app) as test_client:
         yield test_client
     app.dependency_overrides.clear()
+    from app.target.factory import clear_target_client
+
     zap_factory.clear_zap_client()
+    clear_target_client()
     reasoning_factory.clear_reasoning_client()
     db_module._engine = None
     db_module._session_factory = None

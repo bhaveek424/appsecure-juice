@@ -61,6 +61,7 @@ export type ScannerFindingDetail = {
 export type FindingDetail = Finding & {
   review_run_id: string;
   scanner: ScannerFindingDetail | null;
+  business_logic: BusinessLogicEvidence | null;
 };
 
 export const SEVERITY_ORDER: Record<string, number> = {
@@ -87,6 +88,34 @@ export type Hypothesis = {
   source_observations: SourceObservation[];
 };
 
+export type EvidencePacket = {
+  id: string;
+  skill_id: string;
+  scenario: string;
+  actor_context: string;
+  expected_behavior: string;
+  observed_behavior: string;
+  request_method: string;
+  request_path: string;
+  response_status: number;
+  response_excerpt: string;
+  reasoning_summary: string;
+  captured_at: string;
+};
+
+export type SkillRun = {
+  id: string;
+  skill_id: string;
+  status: string;
+  outcome: string | null;
+  summary: string;
+  inconclusive_reason: string | null;
+  finding_id: string | null;
+  started_at: string;
+  completed_at: string | null;
+  evidence_packets: EvidencePacket[];
+};
+
 export type ScanDetail = {
   id: string;
   status: string;
@@ -94,7 +123,21 @@ export type ScanDetail = {
   current_step: string;
   findings: Finding[];
   hypotheses: Hypothesis[];
-  skill_runs: unknown[];
+  skill_runs: SkillRun[];
+};
+
+export type BusinessLogicEvidence = {
+  skill_id: string;
+  scenario: string;
+  actor_context: string;
+  expected_behavior: string;
+  observed_behavior: string;
+  request_method: string;
+  request_path: string;
+  response_status: number;
+  response_excerpt: string;
+  reasoning_summary: string;
+  captured_at: string;
 };
 
 export type BackendConfig = {
@@ -161,6 +204,16 @@ export function getFindingDetail(
   findingId: string,
 ): Promise<FindingDetail> {
   return request<FindingDetail>(`/api/scans/${scanId}/findings/${findingId}`);
+}
+
+export function runReviewSkill(
+  scanId: string,
+  skillId: string,
+): Promise<{ skill_run: SkillRun }> {
+  return request<{ skill_run: SkillRun }>(
+    `/api/scans/${scanId}/skills/${skillId}/run`,
+    { method: "POST" },
+  );
 }
 
 export function updateFindingDisposition(

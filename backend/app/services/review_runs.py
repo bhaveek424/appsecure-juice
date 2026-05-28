@@ -8,8 +8,10 @@ from app.domain.review_run_status import ReviewRunStatus
 from app.domain.target import normalize_target
 from app.models.review_run import ReviewRun
 from app.schemas.scans import FindingCounts, ScanDetail, ScanSummary
+from app.services.exceptions import ReviewRunNotFoundError
 from app.services.findings import finding_counts_for_run, list_findings_for_run
 from app.services.hypotheses import list_hypotheses_for_run
+from app.services.skill_runs import list_skill_runs_for_run
 from app.services.zap_scan import execute_zap_scan
 from app.zap.factory import get_zap_client
 
@@ -22,10 +24,6 @@ class ActiveReviewRunExistsError(Exception):
     def __init__(self, active_run_id: str):
         self.active_run_id = active_run_id
         super().__init__("A Review Run is already active")
-
-
-class ReviewRunNotFoundError(Exception):
-    pass
 
 
 def _configured_target(settings: Settings | None = None) -> str:
@@ -63,6 +61,7 @@ def _to_detail(db: Session, review_run: ReviewRun) -> ScanDetail:
         current_step=review_run.current_step,
         findings=list_findings_for_run(db, review_run.id),
         hypotheses=list_hypotheses_for_run(db, review_run.id),
+        skill_runs=list_skill_runs_for_run(db, review_run.id),
     )
 
 

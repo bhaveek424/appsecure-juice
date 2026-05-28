@@ -4,12 +4,14 @@ import {
   getScan,
   isActiveReviewRun,
   listScans,
+  runReviewSkill,
   type ScanDetail,
   type ScanSummary,
 } from "./api";
 import FindingDetailPanel from "./FindingDetailPanel";
 import FindingsList from "./FindingsList";
 import ReviewQueue from "./ReviewQueue";
+import SkillRunsPanel from "./SkillRunsPanel";
 
 const SCAN_POLL_MS = 3_000;
 
@@ -43,6 +45,7 @@ export default function ReviewRunsPanel({ backendReady }: Props) {
   const [selectedFindingId, setSelectedFindingId] = useState<string | null>(
     null,
   );
+  const [runningSkillId, setRunningSkillId] = useState<string | null>(null);
 
   const activeSummary = history.find((run) => isActiveReviewRun(run.status));
   const activeRun = activeDetail ?? activeSummary ?? null;
@@ -119,6 +122,26 @@ export default function ReviewRunsPanel({ backendReady }: Props) {
   const startDisabled =
     !backendReady || starting || activeRun !== null;
 
+  const canRunSkills = activeDetail?.status === "Ready For Skills";
+
+  async function handleRunSkill(skillId: string) {
+    if (!activeScanId) {
+      return;
+    }
+    setRunningSkillId(skillId);
+    setError(null);
+    try {
+      await runReviewSkill(activeScanId, skillId);
+      await refresh();
+    } catch (runError) {
+      const message =
+        runError instanceof Error ? runError.message : "Unknown error";
+      setError(message);
+    } finally {
+      setRunningSkillId(null);
+    }
+  }
+
   return (
     <section className="panel">
       <div className="panel-header">
@@ -163,7 +186,18 @@ export default function ReviewRunsPanel({ backendReady }: Props) {
             )}
           </dl>
           {activeDetail && activeDetail.hypotheses.length > 0 && (
-            <ReviewQueue hypotheses={activeDetail.hypotheses} />
+            <ReviewQueue
+              hypotheses={activeDetail.hypotheses}
+              canRunSkills={canRunSkills}
+              runningSkillId={runningSkillId}
+              onRunSkill={handleRunSkill}
+            />
+          )}
+          {activeDetail && activeDetail.skill_runs.length > 0 && (
+            <SkillRunsPanel
+              skillRuns={activeDetail.skill_runs}
+              onSelectFinding={setSelectedFindingId}
+            />
           )}
           {activeDetail && activeDetail.findings.length > 0 && (
             <FindingsList
