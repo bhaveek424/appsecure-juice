@@ -1,0 +1,45 @@
+services:
+  juice-shop:
+    image: bkimminich/juice-shop:latest
+    ports:
+      - "3000:3000"
+
+  zap:
+    image: ghcr.io/zaproxy/zaproxy:stable
+    command: >
+      zap.sh -daemon
+      -host 0.0.0.0
+      -port 8080
+      -config api.disablekey=true
+      -config api.addrs.addr.name=.*
+      -config api.addrs.addr.regex=true
+    ports:
+      - "8080:8080"
+
+  backend:
+    build: ./backend
+    ports:
+      - "8000:8000"
+    environment:
+      TARGET_APPLICATION_URL: http://juice-shop:3000
+      ZAP_API_URL: http://zap:8080
+      ZAP_API_KEY: changeme
+      DATABASE_URL: sqlite:///./data/review.db
+      LLM_PROVIDER: mock
+    volumes:
+      - backend-data:/app/data
+    depends_on:
+      - juice-shop
+      - zap
+
+  frontend:
+    build: ./frontend
+    ports:
+      - "5173:5173"
+    environment:
+      VITE_API_BASE_URL: http://localhost:8000
+    depends_on:
+      - backend
+
+volumes:
+  backend-data:
