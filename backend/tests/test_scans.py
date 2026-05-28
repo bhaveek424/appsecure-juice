@@ -91,13 +91,13 @@ def test_list_review_runs_includes_summary_fields(client: TestClient):
 
     run = runs[0]
     assert run["id"] == created["id"]
-    assert run["status"] == "Queued"
-    assert run["current_step"] == "Queued"
+    assert run["status"] == "Ready For Skills"
+    assert run["current_step"] == "ZAP scan complete"
     assert run["started_at"] is not None
     assert run["completed_at"] is None
     assert run["finding_counts"] == {
         "critical": 0,
-        "high": 0,
+        "high": 1,
         "medium": 0,
         "low": 0,
         "informational": 0,
@@ -135,7 +135,12 @@ def test_database_rejects_two_active_review_runs():
     session.close()
 
 
-def test_get_review_run_returns_empty_collections(client: TestClient):
+def test_get_review_run_returns_empty_collections(
+    client: TestClient, monkeypatch
+):
+    monkeypatch.setattr(
+        "app.services.review_runs.enqueue_zap_scan", lambda _review_run_id: None
+    )
     created = client.post(
         "/api/scans",
         json={"target": "http://juice-shop:3000"},

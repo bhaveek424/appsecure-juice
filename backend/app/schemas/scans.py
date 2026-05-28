@@ -2,6 +2,8 @@ from datetime import datetime
 
 from pydantic import BaseModel, Field
 
+from app.schemas.findings import FindingResponse
+
 
 class CreateScanRequest(BaseModel):
     target: str | None = None
@@ -33,7 +35,7 @@ class ScanDetail(BaseModel):
     status: str
     progress: float | None
     current_step: str
-    findings: list = Field(default_factory=list)
+    findings: list[FindingResponse] = Field(default_factory=list)
     hypotheses: list = Field(default_factory=list)
     skill_runs: list = Field(default_factory=list)
 

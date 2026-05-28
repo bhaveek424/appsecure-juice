@@ -24,9 +24,10 @@ def clear_settings_cache(monkeypatch):
 @pytest.fixture
 def client(monkeypatch):
     import app.db as db_module
+    from app.zap.client import MockZapClient
+    from app.zap import factory as zap_factory
 
-    db_module._engine = None
-    db_module._session_factory = None
+    zap_factory.set_zap_client(MockZapClient())
     monkeypatch.setattr("app.main.init_db", lambda: None)
 
     engine = create_engine(
@@ -36,6 +37,8 @@ def client(monkeypatch):
     )
     Base.metadata.create_all(bind=engine)
     TestingSession = sessionmaker(autocommit=False, autoflush=False, bind=engine)
+    db_module._engine = engine
+    db_module._session_factory = TestingSession
 
     def override_get_db():
         db = TestingSession()
@@ -48,4 +51,7 @@ def client(monkeypatch):
     with TestClient(app) as test_client:
         yield test_client
     app.dependency_overrides.clear()
+    zap_factory.clear_zap_client()
+    db_module._engine = None
+    db_module._session_factory = None
     Base.metadata.drop_all(bind=engine)

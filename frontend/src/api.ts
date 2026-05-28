@@ -25,12 +25,34 @@ export type ScanSummary = {
   finding_counts: FindingCounts;
 };
 
+export type Finding = {
+  id: string;
+  source: string;
+  title: string;
+  category: string;
+  severity: string;
+  endpoint: string;
+  description: string;
+  remediation: string;
+  confidence: string | null;
+  evidence_excerpt: string | null;
+  discovered_at: string;
+};
+
+export const SEVERITY_ORDER: Record<string, number> = {
+  Critical: 0,
+  High: 1,
+  Medium: 2,
+  Low: 3,
+  Informational: 4,
+};
+
 export type ScanDetail = {
   id: string;
   status: string;
   progress: number | null;
   current_step: string;
-  findings: unknown[];
+  findings: Finding[];
   hypotheses: unknown[];
   skill_runs: unknown[];
 };

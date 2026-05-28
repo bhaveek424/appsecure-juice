@@ -3,10 +3,14 @@ from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
 from app.config import Settings, get_settings
+from app.db import get_session_factory
 from app.domain.review_run_status import ReviewRunStatus
 from app.domain.target import normalize_target
 from app.models.review_run import ReviewRun
 from app.schemas.scans import FindingCounts, ScanDetail, ScanSummary
+from app.services.findings import finding_counts_for_run, list_findings_for_run
+from app.services.zap_scan import execute_zap_scan
+from app.zap.factory import get_zap_client
 
 
 class TargetNotAllowedError(Exception):
@@ -39,27 +43,24 @@ def _resolve_target(target: str | None) -> str:
     return normalized
 
 
-def _empty_finding_counts() -> FindingCounts:
-    return FindingCounts()
-
-
-def _to_summary(review_run: ReviewRun) -> ScanSummary:
+def _to_summary(db: Session, review_run: ReviewRun) -> ScanSummary:
     return ScanSummary(
         id=review_run.id,
         status=review_run.status,
         started_at=review_run.started_at,
         completed_at=review_run.completed_at,
         current_step=review_run.current_step,
-        finding_counts=_empty_finding_counts(),
+        finding_counts=finding_counts_for_run(db, review_run.id),
     )
 
 
-def _to_detail(review_run: ReviewRun) -> ScanDetail:
+def _to_detail(db: Session, review_run: ReviewRun) -> ScanDetail:
     return ScanDetail(
         id=review_run.id,
         status=review_run.status,
         progress=review_run.progress,
         current_step=review_run.current_step,
+        findings=list_findings_for_run(db, review_run.id),
     )
 
 
@@ -91,14 +92,22 @@ def create_review_run(db: Session, *, target: str | None = None) -> ReviewRun:
     return review_run
 
 
+def enqueue_zap_scan(review_run_id: str) -> None:
+    db = get_session_factory()()
+    try:
+        execute_zap_scan(db, review_run_id, get_zap_client())
+    finally:
+        db.close()
+
+
 def list_review_runs(db: Session) -> list[ScanSummary]:
     statement = select(ReviewRun).order_by(ReviewRun.started_at.desc())
     runs = db.scalars(statement).all()
-    return [_to_summary(run) for run in runs]
+    return [_to_summary(db, run) for run in runs]
 
 
 def get_review_run(db: Session, review_run_id: str) -> ScanDetail:
     review_run = db.get(ReviewRun, review_run_id)
     if review_run is None:
         raise ReviewRunNotFoundError
-    return _to_detail(review_run)
+    return _to_detail(db, review_run)

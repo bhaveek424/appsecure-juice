@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Body, Depends, HTTPException, status
+from fastapi import APIRouter, BackgroundTasks, Body, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 
 from app.db import get_db
@@ -16,6 +16,7 @@ router = APIRouter(prefix="/api/scans", tags=["scans"])
 
 @router.post("", status_code=status.HTTP_201_CREATED, response_model=CreateScanResponse)
 def create_scan(
+    background_tasks: BackgroundTasks,
     body: CreateScanRequest = Body(default_factory=CreateScanRequest),
     db: Session = Depends(get_db),
 ):
@@ -41,6 +42,7 @@ def create_scan(
             detail=str(exc),
         ) from exc
 
+    background_tasks.add_task(review_run_service.enqueue_zap_scan, review_run.id)
     return CreateScanResponse(id=review_run.id)
 
 

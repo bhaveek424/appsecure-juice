@@ -7,6 +7,7 @@ import {
   type ScanDetail,
   type ScanSummary,
 } from "./api";
+import FindingsList from "./FindingsList";
 
 const SCAN_POLL_MS = 3_000;
 
@@ -38,10 +39,8 @@ export default function ReviewRunsPanel({ backendReady }: Props) {
   const [starting, setStarting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const activeRun =
-    activeDetail ??
-    history.find((run) => isActiveReviewRun(run.status)) ??
-    null;
+  const activeSummary = history.find((run) => isActiveReviewRun(run.status));
+  const activeRun = activeDetail ?? activeSummary ?? null;
 
   const refresh = useCallback(async () => {
     const runs = await listScans();
@@ -143,13 +142,26 @@ export default function ReviewRunsPanel({ backendReady }: Props) {
               <dt>Current step</dt>
               <dd>{activeRun.current_step}</dd>
             </div>
-            {"progress" in activeRun && activeRun.progress !== null && (
+            {activeDetail?.progress !== null &&
+              activeDetail?.progress !== undefined && (
               <div>
                 <dt>Progress</dt>
-                <dd>{Math.round(activeRun.progress * 100)}%</dd>
+                <dd>
+                  <progress
+                    max={1}
+                    value={activeDetail.progress}
+                  />
+                  <span>{Math.round(activeDetail.progress * 100)}%</span>
+                </dd>
               </div>
             )}
           </dl>
+          {activeDetail && activeDetail.findings.length > 0 && (
+            <FindingsList
+              findings={activeDetail.findings}
+              findingCounts={activeSummary?.finding_counts}
+            />
+          )}
         </div>
       )}
 
