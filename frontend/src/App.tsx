@@ -1,22 +1,14 @@
 import { useEffect, useState } from "react";
+import {
+  fetchConfig,
+  fetchHealth,
+  type BackendConfig,
+  type HealthResponse,
+} from "./api";
+import ReviewRunsPanel from "./ReviewRunsPanel";
 import "./App.css";
 
-const apiBase = import.meta.env.VITE_API_BASE_URL ?? "http://localhost:8000";
 const HEALTH_POLL_MS = 3_000;
-
-type BackendConfig = {
-  target_application_url: string;
-  llm_provider: string;
-  llm_configured: boolean;
-};
-
-type HealthResponse = {
-  status: "ok" | "degraded";
-  dependencies: {
-    target_application: { reachable: boolean };
-    zap: { reachable: boolean };
-  };
-};
 
 type LoadState =
   | { kind: "loading" }
@@ -27,22 +19,6 @@ type LoadState =
       waitingForDependencies: boolean;
     }
   | { kind: "error"; message: string };
-
-async function fetchConfig(): Promise<BackendConfig> {
-  const response = await fetch(`${apiBase}/api/config`);
-  if (!response.ok) {
-    throw new Error("Config request failed");
-  }
-  return response.json() as Promise<BackendConfig>;
-}
-
-async function fetchHealth(): Promise<HealthResponse> {
-  const response = await fetch(`${apiBase}/health`);
-  if (!response.ok) {
-    throw new Error("Health request failed");
-  }
-  return response.json() as Promise<HealthResponse>;
-}
 
 export default function App() {
   const [state, setState] = useState<LoadState>({ kind: "loading" });
@@ -88,6 +64,9 @@ export default function App() {
       }
     };
   }, []);
+
+  const backendReady =
+    state.kind === "ready" && state.health.status === "ok";
 
   return (
     <div className="workbench">
@@ -151,6 +130,10 @@ export default function App() {
           </>
         )}
       </section>
+
+      {state.kind === "ready" && (
+        <ReviewRunsPanel backendReady={backendReady} />
+      )}
     </div>
   );
 }

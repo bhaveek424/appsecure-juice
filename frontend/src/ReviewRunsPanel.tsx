@@ -1,0 +1,177 @@
+import { useCallback, useEffect, useState } from "react";
+import {
+  createScan,
+  getScan,
+  isActiveReviewRun,
+  listScans,
+  type ScanDetail,
+  type ScanSummary,
+} from "./api";
+
+const SCAN_POLL_MS = 3_000;
+
+type Props = {
+  backendReady: boolean;
+};
+
+function formatTimestamp(value: string | null): string {
+  if (!value) {
+    return "—";
+  }
+  return new Date(value).toLocaleString();
+}
+
+function totalFindings(counts: ScanSummary["finding_counts"]): number {
+  return (
+    counts.critical +
+    counts.high +
+    counts.medium +
+    counts.low +
+    counts.informational
+  );
+}
+
+export default function ReviewRunsPanel({ backendReady }: Props) {
+  const [history, setHistory] = useState<ScanSummary[]>([]);
+  const [activeDetail, setActiveDetail] = useState<ScanDetail | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [starting, setStarting] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  const activeRun =
+    activeDetail ??
+    history.find((run) => isActiveReviewRun(run.status)) ??
+    null;
+
+  const refresh = useCallback(async () => {
+    const runs = await listScans();
+    setHistory(runs);
+
+    const activeSummary = runs.find((run) => isActiveReviewRun(run.status));
+    if (activeSummary) {
+      const detail = await getScan(activeSummary.id);
+      setActiveDetail(detail);
+    } else {
+      setActiveDetail(null);
+    }
+  }, []);
+
+  useEffect(() => {
+    if (!backendReady) {
+      return;
+    }
+
+    let cancelled = false;
+    let timer: ReturnType<typeof setTimeout> | undefined;
+
+    async function load() {
+      try {
+        await refresh();
+        if (!cancelled) {
+          setError(null);
+        }
+      } catch (loadError) {
+        if (!cancelled) {
+          const message =
+            loadError instanceof Error ? loadError.message : "Unknown error";
+          setError(message);
+        }
+      } finally {
+        if (!cancelled) {
+          setLoading(false);
+          timer = setTimeout(load, SCAN_POLL_MS);
+        }
+      }
+    }
+
+    load();
+
+    return () => {
+      cancelled = true;
+      if (timer !== undefined) {
+        clearTimeout(timer);
+      }
+    };
+  }, [backendReady, refresh]);
+
+  async function handleStartScan() {
+    setStarting(true);
+    setError(null);
+    try {
+      const created = await createScan();
+      const detail = await getScan(created.id);
+      setActiveDetail(detail);
+      await refresh();
+    } catch (startError) {
+      const message =
+        startError instanceof Error ? startError.message : "Unknown error";
+      setError(message);
+    } finally {
+      setStarting(false);
+    }
+  }
+
+  const startDisabled =
+    !backendReady || starting || activeRun !== null;
+
+  return (
+    <section className="panel">
+      <div className="panel-header">
+        <h2>Review Runs</h2>
+        <button
+          type="button"
+          className="primary-button"
+          disabled={startDisabled}
+          onClick={handleStartScan}
+        >
+          {starting ? "Starting…" : "Start Review Run"}
+        </button>
+      </div>
+
+      {loading && <p>Loading Review Runs…</p>}
+      {error && <p className="status-bad">{error}</p>}
+
+      {activeRun && (
+        <div className="active-run">
+          <h3>Active Review Run</h3>
+          <dl>
+            <div>
+              <dt>Status</dt>
+              <dd>{activeRun.status}</dd>
+            </div>
+            <div>
+              <dt>Current step</dt>
+              <dd>{activeRun.current_step}</dd>
+            </div>
+            {"progress" in activeRun && activeRun.progress !== null && (
+              <div>
+                <dt>Progress</dt>
+                <dd>{Math.round(activeRun.progress * 100)}%</dd>
+              </div>
+            )}
+          </dl>
+        </div>
+      )}
+
+      <div className="scan-history">
+        <h3>History</h3>
+        {history.length === 0 ? (
+          <p className="muted">No Review Runs yet.</p>
+        ) : (
+          <ul>
+            {history.map((run) => (
+              <li key={run.id}>
+                <span className="run-status">{run.status}</span>
+                <span className="run-step">{run.current_step}</span>
+                <span className="run-time">{formatTimestamp(run.started_at)}</span>
+                <span className="run-findings">
+                  {totalFindings(run.finding_counts)} findings
+                </span>
+              </li>
+            ))}
+          </ul>
+        )}
+      </div>
+    </section>
+  );
+}

@@ -10,13 +10,13 @@ Implement the first end-to-end Review Run path. A reviewer can start a Review Ru
 
 ## Acceptance criteria
 
-- [ ] `POST /api/scans` creates a Review Run and returns its id immediately.
-- [ ] The backend rejects any requested target that does not exactly match the configured Target Application after normalization.
-- [ ] Starting a second active Review Run returns `409 Conflict` with the active run id.
-- [ ] `GET /api/scans` lists Review Runs with id, status, start time, completion time, current step, and finding counts.
-- [ ] `GET /api/scans/:id` returns status, progress, current step, and empty collections for findings, hypotheses, and skill runs.
-- [ ] Frontend can start a Review Run, disables Start while a run is active, polls the active run, and shows scan history.
-- [ ] Backend tests cover target guardrail and one-active-run behavior.
+- [x] `POST /api/scans` creates a Review Run and returns its id immediately.
+- [x] The backend rejects any requested target that does not exactly match the configured Target Application after normalization.
+- [x] Starting a second active Review Run returns `409 Conflict` with the active run id.
+- [x] `GET /api/scans` lists Review Runs with id, status, start time, completion time, current step, and finding counts.
+- [x] `GET /api/scans/:id` returns status, progress, current step, and empty collections for findings, hypotheses, and skill runs.
+- [x] Frontend can start a Review Run, disables Start while a run is active, polls the active run, and shows scan history.
+- [x] Backend tests cover target guardrail and one-active-run behavior.
 
 ## Blocked by
 
