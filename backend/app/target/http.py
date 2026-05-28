@@ -105,3 +105,89 @@ class HttpTargetClient:
             response_headers=dict(response.headers),
             response_body=response.text[:2000],
         )
+
+    def ensure_user_product_review(
+        self,
+        actor: AuthenticatedActor,
+        product_id: int,
+        message: str,
+        author_email: str,
+    ) -> str:
+        path = f"/rest/products/{product_id}/reviews"
+        headers = {
+            "Authorization": f"Bearer {actor.token}",
+            "Accept": "application/json",
+            "Content-Type": "application/json",
+        }
+        with httpx.Client(timeout=30.0) as client:
+            existing = client.get(f"{self._base_url}{path}", headers=headers)
+            existing.raise_for_status()
+            body = existing.json()
+            reviews = body.get("data", body) if isinstance(body, dict) else body
+            if isinstance(reviews, list):
+                for review in reviews:
+                    if not isinstance(review, dict):
+                        continue
+                    if review.get("author") == author_email:
+                        review_id = review.get("_id") or review.get("id")
+                        if review_id is not None:
+                            return str(review_id)
+
+            create = client.put(
+                f"{self._base_url}{path}",
+                headers=headers,
+                json={"message": message, "author": author_email},
+            )
+            if create.status_code not in {200, 201}:
+                create.raise_for_status()
+
+            refreshed = client.get(f"{self._base_url}{path}", headers=headers)
+            refreshed.raise_for_status()
+            refreshed_body = refreshed.json()
+            refreshed_reviews = (
+                refreshed_body.get("data", refreshed_body)
+                if isinstance(refreshed_body, dict)
+                else refreshed_body
+            )
+            if not isinstance(refreshed_reviews, list):
+                raise RuntimeError("Unexpected reviews response shape")
+
+            for review in refreshed_reviews:
+                if not isinstance(review, dict):
+                    continue
+                if review.get("author") == author_email:
+                    review_id = review.get("_id") or review.get("id")
+                    if review_id is not None:
+                        return str(review_id)
+
+        raise RuntimeError("Failed to create or locate User A product review")
+
+    def probe_cross_actor_review_edit(
+        self,
+        actor: AuthenticatedActor,
+        review_id: str,
+        new_message: str,
+    ) -> ProbeCapture:
+        path = "/rest/products/reviews"
+        headers = {
+            "Authorization": f"Bearer {actor.token}",
+            "Content-Type": "application/json",
+        }
+        payload = {"id": review_id, "message": new_message}
+        with httpx.Client(timeout=30.0) as client:
+            response = client.patch(
+                f"{self._base_url}{path}",
+                headers=headers,
+                json=payload,
+            )
+
+        return ProbeCapture(
+            scenario="Cross-actor review edit",
+            actor_context=actor.actor_context,
+            request_method="PATCH",
+            request_path=path,
+            request_headers=headers,
+            response_status=response.status_code,
+            response_headers=dict(response.headers),
+            response_body=response.text[:2000],
+        )

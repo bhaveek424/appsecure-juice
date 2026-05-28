@@ -8,10 +8,17 @@ class MockTargetClient:
         *,
         boundary_violation: bool = True,
         checkout_manipulation_accepted: bool = False,
+        review_ownership_violation: bool | None = None,
     ) -> None:
         self._boundary_violation = boundary_violation
         self._checkout_manipulation_accepted = checkout_manipulation_accepted
+        self._review_ownership_violation = (
+            review_ownership_violation
+            if review_ownership_violation is not None
+            else boundary_violation
+        )
         self._users: dict[str, AuthenticatedActor] = {}
+        self._reviews: dict[str, dict[str, str]] = {}
 
     def register_user(self, email: str, password: str) -> None:
         _ = password
@@ -102,4 +109,62 @@ class MockTargetClient:
             response_status=400,
             response_headers={"Content-Type": "application/json"},
             response_body='{"error":"Invalid quantity"}',
+        )
+
+    def ensure_user_product_review(
+        self,
+        actor: AuthenticatedActor,
+        product_id: int,
+        message: str,
+        author_email: str,
+    ) -> str:
+        review_id = f"review-{actor.user_id}-{product_id}"
+        self._reviews[review_id] = {
+            "author": author_email,
+            "message": message,
+            "product_id": str(product_id),
+        }
+        return review_id
+
+    def probe_cross_actor_review_edit(
+        self,
+        actor: AuthenticatedActor,
+        review_id: str,
+        new_message: str,
+    ) -> ProbeCapture:
+        review = self._reviews.get(review_id, {"author": "user-a@review.local"})
+        owner_email = review["author"]
+        headers = {
+            "Authorization": f"Bearer {actor.token}",
+            "Content-Type": "application/json",
+        }
+        if self._review_ownership_violation:
+            return ProbeCapture(
+                scenario="Cross-actor review edit",
+                actor_context=actor.actor_context,
+                request_method="PATCH",
+                request_path="/rest/products/reviews",
+                request_headers=headers,
+                response_status=200,
+                response_headers={"Content-Type": "application/json"},
+                response_body=(
+                    '{"modified":1,"original":[{"_id":"'
+                    + review_id
+                    + '","author":"'
+                    + owner_email
+                    + '","message":"'
+                    + new_message
+                    + '"}]}'
+                ),
+            )
+
+        return ProbeCapture(
+            scenario="Cross-actor review edit",
+            actor_context=actor.actor_context,
+            request_method="PATCH",
+            request_path="/rest/products/reviews",
+            request_headers=headers,
+            response_status=403,
+            response_headers={"Content-Type": "application/json"},
+            response_body='{"error":"Forbidden"}',
         )

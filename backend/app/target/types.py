@@ -51,3 +51,18 @@ class TargetClient(Protocol):
         self,
         actor: AuthenticatedActor,
     ) -> ProbeCapture: ...
+
+    def ensure_user_product_review(
+        self,
+        actor: AuthenticatedActor,
+        product_id: int,
+        message: str,
+        author_email: str,
+    ) -> str: ...
+
+    def probe_cross_actor_review_edit(
+        self,
+        actor: AuthenticatedActor,
+        review_id: str,
+        new_message: str,
+    ) -> ProbeCapture: ...

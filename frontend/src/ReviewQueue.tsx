@@ -3,6 +3,7 @@ import type { Hypothesis } from "./api";
 const RUNNABLE_SKILLS: Record<string, string> = {
   "account-boundary": "Run Account Boundary Skill",
   "basket-and-checkout": "Run Basket And Checkout Skill",
+  "review-ownership": "Run Review Ownership Skill",
 };
 
 type Props = {
@@ -57,7 +58,7 @@ export default function ReviewQueue({
                   onClick={() => onRunSkill(hypothesis.recommended_skill_id)}
                 >
                   {runningSkillId === hypothesis.recommended_skill_id
-                    ? "Running…"
+                    ? "Running..."
                     : RUNNABLE_SKILLS[hypothesis.recommended_skill_id]}
                 </button>
               )}

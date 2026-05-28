@@ -19,12 +19,13 @@ from app.services.exceptions import (
 )
 from app.skills.account_boundary import run_account_boundary_skill
 from app.skills.basket_and_checkout import run_basket_and_checkout_skill
+from app.skills.review_ownership import run_review_ownership_skill
 from app.target.factory import get_target_client
 from app.target.types import TargetClient
 
 _SkillRunner = Callable[[Session, ReviewRun, SkillRun, TargetClient], None]
 
-_SKILL_HANDLERS: dict[str, tuple[_SkillRunner, str]] = {
+_SKILL_HANDLERS: dict[ReviewSkillId, tuple[_SkillRunner, str]] = {
     ReviewSkillId.ACCOUNT_BOUNDARY: (
         run_account_boundary_skill,
         "Account Boundary",
@@ -32,6 +33,10 @@ _SKILL_HANDLERS: dict[str, tuple[_SkillRunner, str]] = {
     ReviewSkillId.BASKET_AND_CHECKOUT: (
         run_basket_and_checkout_skill,
         "Basket And Checkout",
+    ),
+    ReviewSkillId.REVIEW_OWNERSHIP: (
+        run_review_ownership_skill,
+        "Review Ownership",
     ),
 }
 
@@ -79,7 +84,12 @@ def run_review_skill(
     if review_run.status != ReviewRunStatus.READY_FOR_SKILLS:
         raise ReviewRunNotReadyError
 
-    handler = _SKILL_HANDLERS.get(skill_id)
+    try:
+        skill = ReviewSkillId(skill_id)
+    except ValueError as exc:
+        raise UnknownSkillError from exc
+
+    handler = _SKILL_HANDLERS.get(skill)
     if handler is None:
         raise UnknownSkillError
 
