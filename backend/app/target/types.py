@@ -46,3 +46,8 @@ class TargetClient(Protocol):
         actor: AuthenticatedActor,
         other_basket_id: int,
     ) -> ProbeCapture: ...
+
+    def probe_negative_basket_quantity(
+        self,
+        actor: AuthenticatedActor,
+    ) -> ProbeCapture: ...

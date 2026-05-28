@@ -3,8 +3,14 @@ from app.target.types import AuthenticatedActor, ProbeCapture
 
 
 class MockTargetClient:
-    def __init__(self, *, boundary_violation: bool = True) -> None:
+    def __init__(
+        self,
+        *,
+        boundary_violation: bool = True,
+        checkout_manipulation_accepted: bool = False,
+    ) -> None:
         self._boundary_violation = boundary_violation
+        self._checkout_manipulation_accepted = checkout_manipulation_accepted
         self._users: dict[str, AuthenticatedActor] = {}
 
     def register_user(self, email: str, password: str) -> None:
@@ -60,4 +66,40 @@ class MockTargetClient:
             response_status=403,
             response_headers={"Content-Type": "application/json"},
             response_body='{"error":"Forbidden"}',
+        )
+
+    def probe_negative_basket_quantity(
+        self,
+        actor: AuthenticatedActor,
+    ) -> ProbeCapture:
+        path = "/api/BasketItems/"
+        headers = {
+            "Authorization": f"Bearer {actor.token}",
+            "Content-Type": "application/json",
+            "Accept": "application/json",
+        }
+        if self._checkout_manipulation_accepted:
+            return ProbeCapture(
+                scenario="Negative basket quantity",
+                actor_context=actor.actor_context,
+                request_method="POST",
+                request_path=path,
+                request_headers=headers,
+                response_status=201,
+                response_headers={"Content-Type": "application/json"},
+                response_body=(
+                    '{"ProductId":1,"BasketId":10,"quantity":-1,'
+                    '"id":99}'
+                ),
+            )
+
+        return ProbeCapture(
+            scenario="Negative basket quantity",
+            actor_context=actor.actor_context,
+            request_method="POST",
+            request_path=path,
+            request_headers=headers,
+            response_status=400,
+            response_headers={"Content-Type": "application/json"},
+            response_body='{"error":"Invalid quantity"}',
         )

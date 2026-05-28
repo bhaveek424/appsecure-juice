@@ -72,3 +72,36 @@ class HttpTargetClient:
             response_headers=dict(response.headers),
             response_body=response.text[:2000],
         )
+
+    def probe_negative_basket_quantity(
+        self,
+        actor: AuthenticatedActor,
+    ) -> ProbeCapture:
+        headers = {
+            "Authorization": f"Bearer {actor.token}",
+            "Content-Type": "application/json",
+            "Accept": "application/json",
+        }
+        path = "/api/BasketItems/"
+        payload = {
+            "ProductId": 1,
+            "quantity": -1,
+            "BasketId": str(actor.basket_id),
+        }
+        with httpx.Client(timeout=30.0) as client:
+            response = client.post(
+                f"{self._base_url}{path}",
+                headers=headers,
+                json=payload,
+            )
+
+        return ProbeCapture(
+            scenario="Negative basket quantity",
+            actor_context=actor.actor_context,
+            request_method="POST",
+            request_path=path,
+            request_headers=headers,
+            response_status=response.status_code,
+            response_headers=dict(response.headers),
+            response_body=response.text[:2000],
+        )
