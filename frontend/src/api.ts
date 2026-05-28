@@ -71,13 +71,29 @@ export const SEVERITY_ORDER: Record<string, number> = {
   Informational: 4,
 };
 
+export type SourceObservation = {
+  finding_id: string;
+  title: string;
+  severity: string;
+};
+
+export type Hypothesis = {
+  id: string;
+  title: string;
+  rationale: string;
+  recommended_skill_id: string;
+  recommended_skill_name: string;
+  priority: string;
+  source_observations: SourceObservation[];
+};
+
 export type ScanDetail = {
   id: string;
   status: string;
   progress: number | null;
   current_step: string;
   findings: Finding[];
-  hypotheses: unknown[];
+  hypotheses: Hypothesis[];
   skill_runs: unknown[];
 };
 

@@ -59,3 +59,17 @@ def test_config_reports_llm_configured_without_exposing_key(monkeypatch):
 
     assert data["llm_configured"] is True
     assert "super-secret-nvidia-key" not in str(data)
+
+
+def test_config_uses_mock_provider_when_nvidia_key_missing(monkeypatch):
+    monkeypatch.delenv("NVIDIA_API_KEY", raising=False)
+    monkeypatch.setenv("LLM_PROVIDER", "nvidia")
+    from app.config import get_settings
+
+    get_settings.cache_clear()
+
+    client = TestClient(app)
+    data = client.get("/api/config").json()
+
+    assert data["llm_provider"] == "mock"
+    assert data["llm_configured"] is False

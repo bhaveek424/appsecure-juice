@@ -9,6 +9,7 @@ import {
 } from "./api";
 import FindingDetailPanel from "./FindingDetailPanel";
 import FindingsList from "./FindingsList";
+import ReviewQueue from "./ReviewQueue";
 
 const SCAN_POLL_MS = 3_000;
 
@@ -161,6 +162,9 @@ export default function ReviewRunsPanel({ backendReady }: Props) {
               </div>
             )}
           </dl>
+          {activeDetail && activeDetail.hypotheses.length > 0 && (
+            <ReviewQueue hypotheses={activeDetail.hypotheses} />
+          )}
           {activeDetail && activeDetail.findings.length > 0 && (
             <FindingsList
               findings={activeDetail.findings}

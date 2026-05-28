@@ -92,7 +92,7 @@ def test_list_review_runs_includes_summary_fields(client: TestClient):
     run = runs[0]
     assert run["id"] == created["id"]
     assert run["status"] == "Ready For Skills"
-    assert run["current_step"] == "ZAP scan complete"
+    assert run["current_step"] == "Agent triage complete"
     assert run["started_at"] is not None
     assert run["completed_at"] is None
     assert run["finding_counts"] == {

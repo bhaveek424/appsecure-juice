@@ -25,9 +25,11 @@ def clear_settings_cache(monkeypatch):
 def client(monkeypatch):
     import app.db as db_module
     from app.zap.client import MockZapClient
+    from app.reasoning import factory as reasoning_factory
     from app.zap import factory as zap_factory
 
     zap_factory.set_zap_client(MockZapClient())
+    reasoning_factory.clear_reasoning_client()
     monkeypatch.setattr("app.main.init_db", lambda: None)
 
     engine = create_engine(
@@ -52,6 +54,7 @@ def client(monkeypatch):
         yield test_client
     app.dependency_overrides.clear()
     zap_factory.clear_zap_client()
+    reasoning_factory.clear_reasoning_client()
     db_module._engine = None
     db_module._session_factory = None
     Base.metadata.drop_all(bind=engine)

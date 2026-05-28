@@ -69,7 +69,7 @@ See `.env.example` for:
 - **Docker Compose** bundles Juice Shop, ZAP, backend, and frontend for a one-command demo.
 - **Polling over SSE/WebSockets** keeps the first frontend simple; status updates poll the backend.
 - **SQLite** keeps review state local and easy to reset; not aimed at multi-tenant production.
-- **Mock LLM** lets the stack run without external API access; real triage lands in a later issue.
+- **Mock LLM** returns deterministic Hypotheses when no `NVIDIA_API_KEY` is set; set the key and `LLM_PROVIDER=nvidia` for NVIDIA NIM triage.
 
 ## Database upgrades
 
