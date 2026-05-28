@@ -10,13 +10,13 @@ Create the initial fullstack skeleton for the AppSec Review Workbench. A reviewe
 
 ## Acceptance criteria
 
-- [ ] `docker compose up` starts Juice Shop, ZAP, backend, and frontend.
-- [ ] Juice Shop is reachable from the host and from the backend as the configured Target Application.
-- [ ] ZAP runs in daemon mode and is reachable from the backend.
-- [ ] Backend exposes a health/config endpoint that does not leak secrets.
-- [ ] Frontend renders a basic AppSec Review Workbench shell and shows backend connectivity.
-- [ ] `.env.example` documents mock LLM mode and NVIDIA NIM configuration.
-- [ ] No real API key or secret is committed.
+- [x] `docker compose up` starts Juice Shop, ZAP, backend, and frontend.
+- [x] Juice Shop is reachable from the host and from the backend as the configured Target Application.
+- [x] ZAP runs in daemon mode and is reachable from the backend.
+- [x] Backend exposes a health/config endpoint that does not leak secrets.
+- [x] Frontend renders a basic AppSec Review Workbench shell and shows backend connectivity.
+- [x] `.env.example` documents mock LLM mode and NVIDIA NIM configuration.
+- [x] No real API key or secret is committed.
 
 ## Blocked by
 

@@ -4,7 +4,15 @@ from fastapi.testclient import TestClient
 
 from app.main import app
 
-SECRET_KEYS = {
+PUBLIC_CONFIG_KEYS = {
+    "target_application_url",
+    "llm_provider",
+    "llm_configured",
+}
+
+FORBIDDEN_PUBLIC_KEYS = {
+    "zap_api_url",
+    "database_url",
     "zap_api_key",
     "nvidia_api_key",
     "llm_api_key",
@@ -32,11 +40,12 @@ def test_config_exposes_target_application(monkeypatch):
     data = response.json()
     assert data["target_application_url"] == "http://juice-shop:3000/#/"
     assert data["llm_provider"] == os.getenv("LLM_PROVIDER", "mock")
+    assert set(data.keys()) == PUBLIC_CONFIG_KEYS
 
-    for key in data:
-        assert key.lower() not in SECRET_KEYS
-        assert "secret" not in key.lower()
-        assert "super-secret" not in str(data[key])
+    for key in FORBIDDEN_PUBLIC_KEYS:
+        assert key not in data
+
+    assert "super-secret" not in str(data)
 
 
 def test_config_reports_llm_configured_without_exposing_key(monkeypatch):

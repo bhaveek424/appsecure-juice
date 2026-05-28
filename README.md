@@ -26,7 +26,10 @@ docker compose up --build
 | Backend API   | http://localhost:8000      |
 | Workbench UI  | http://localhost:5173      |
 
-The dashboard calls `GET /health` and `GET /api/config`. Config exposes the Target Application URL and LLM mode but never API keys.
+The dashboard calls `GET /health` and `GET /api/config`.
+
+- **`GET /health`** returns `status: ok` when Juice Shop and ZAP are reachable from the backend, otherwise `degraded` with per-dependency `reachable` flags.
+- **`GET /api/config`** exposes only the Target Application URL and safe LLM mode flags — never API keys, ZAP URLs, or database connection strings.
 
 ## Local development
 

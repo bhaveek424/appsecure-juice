@@ -8,11 +8,12 @@ router = APIRouter(prefix="/api", tags=["config"])
 @router.get("/config")
 def read_config():
     settings = get_settings()
+    nvidia_key = settings.nvidia_api_key
+    llm_configured = (
+        nvidia_key is not None and bool(nvidia_key.get_secret_value())
+    )
     return {
         "target_application_url": settings.target_application_url,
-        "zap_api_url": settings.zap_api_url,
-        "database_url": settings.database_url,
         "llm_provider": settings.llm_provider,
-        "llm_configured": settings.nvidia_api_key is not None
-        and bool(settings.nvidia_api_key.get_secret_value()),
+        "llm_configured": llm_configured,
     }

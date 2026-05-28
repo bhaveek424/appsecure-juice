@@ -21,11 +21,12 @@ services:
     ports:
       - "8000:8000"
     environment:
-      TARGET_APPLICATION_URL: http://juice-shop:3000
-      ZAP_API_URL: http://zap:8080
-      ZAP_API_KEY: changeme
-      DATABASE_URL: sqlite:///./data/review.db
-      LLM_PROVIDER: mock
+      TARGET_APPLICATION_URL: ${TARGET_APPLICATION_URL:-http://juice-shop:3000}
+      ZAP_API_URL: ${ZAP_API_URL:-http://zap:8080}
+      ZAP_API_KEY: ${ZAP_API_KEY:-changeme}
+      DATABASE_URL: ${DATABASE_URL:-sqlite:///./data/review.db}
+      LLM_PROVIDER: ${LLM_PROVIDER:-mock}
+      NVIDIA_API_KEY: ${NVIDIA_API_KEY:-}
     volumes:
       - backend-data:/app/data
     depends_on:
