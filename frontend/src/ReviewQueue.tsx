@@ -44,7 +44,8 @@ export default function ReviewQueue({
             )}
             {canRunSkills &&
               onRunSkill &&
-              hypothesis.recommended_skill_id === "account-boundary" && (
+              (hypothesis.recommended_skill_id === "account-boundary" ||
+                hypothesis.recommended_skill_id === "review-ownership") && (
                 <button
                   type="button"
                   className="primary-button"
@@ -53,7 +54,9 @@ export default function ReviewQueue({
                 >
                   {runningSkillId === hypothesis.recommended_skill_id
                     ? "Running…"
-                    : "Run Account Boundary Skill"}
+                    : hypothesis.recommended_skill_id === "account-boundary"
+                      ? "Run Account Boundary Skill"
+                      : "Run Review Ownership Skill"}
                 </button>
               )}
           </li>

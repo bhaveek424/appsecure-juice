@@ -1,3 +1,4 @@
+from collections.abc import Callable
 from datetime import UTC, datetime
 
 from sqlalchemy import select
@@ -17,7 +18,23 @@ from app.services.exceptions import (
     UnknownSkillError,
 )
 from app.skills.account_boundary import run_account_boundary_skill
+from app.skills.review_ownership import run_review_ownership_skill
 from app.target.factory import get_target_client
+from app.target.types import TargetClient
+
+_SKILL_HANDLERS: dict[
+    ReviewSkillId,
+    tuple[Callable[[Session, ReviewRun, SkillRun, TargetClient], None], str],
+] = {
+    ReviewSkillId.ACCOUNT_BOUNDARY: (
+        run_account_boundary_skill,
+        "Account Boundary",
+    ),
+    ReviewSkillId.REVIEW_OWNERSHIP: (
+        run_review_ownership_skill,
+        "Review Ownership",
+    ),
+}
 
 
 def _to_evidence_response(packet: EvidencePacket) -> EvidencePacketResponse:
@@ -63,24 +80,32 @@ def run_review_skill(
     if review_run.status != ReviewRunStatus.READY_FOR_SKILLS:
         raise ReviewRunNotReadyError
 
-    if skill_id != ReviewSkillId.ACCOUNT_BOUNDARY:
+    try:
+        skill = ReviewSkillId(skill_id)
+    except ValueError as exc:
+        raise UnknownSkillError from exc
+
+    handler = _SKILL_HANDLERS.get(skill)
+    if handler is None:
         raise UnknownSkillError
+
+    run_skill, label = handler
 
     skill_run = SkillRun(
         review_run_id=review_run_id,
         skill_id=skill_id,
         status=SkillRunStatus.RUNNING,
-        summary="Running Account Boundary Skill",
+        summary=f"Running {label} Skill",
     )
     db.add(skill_run)
     review_run.status = ReviewRunStatus.PROBING
-    review_run.current_step = "Running Account Boundary Skill"
+    review_run.current_step = f"Running {label} Skill"
     db.commit()
     db.refresh(skill_run)
 
     target_client = get_target_client()
     try:
-        run_account_boundary_skill(db, review_run, skill_run, target_client)
+        run_skill(db, review_run, skill_run, target_client)
         if skill_run.finding_id:
             skill_run.outcome = SkillRunOutcome.FINDING_CREATED
         else:
@@ -88,13 +113,13 @@ def run_review_skill(
             skill_run.inconclusive_reason = skill_run.summary
         skill_run.status = SkillRunStatus.COMPLETED
         review_run.status = ReviewRunStatus.READY_FOR_SKILLS
-        review_run.current_step = "Account Boundary Skill complete"
+        review_run.current_step = f"{label} Skill complete"
     except Exception:
         skill_run.status = SkillRunStatus.FAILED
         skill_run.outcome = SkillRunOutcome.FAILED
-        skill_run.summary = "Account Boundary Skill failed"
+        skill_run.summary = f"{label} Skill failed"
         review_run.status = ReviewRunStatus.READY_FOR_SKILLS
-        review_run.current_step = "Account Boundary Skill failed"
+        review_run.current_step = f"{label} Skill failed"
         skill_run.completed_at = datetime.now(UTC)
         db.commit()
         raise
