@@ -71,6 +71,17 @@ See `.env.example` for:
 - **SQLite** keeps review state local and easy to reset; not aimed at multi-tenant production.
 - **Mock LLM** lets the stack run without external API access; real triage lands in a later issue.
 
+## Database upgrades
+
+On startup the backend runs `create_all()` plus a small SQLite migration for additive schema changes (for example the `findings.disposition` column added in issue 0004). Existing Docker volumes are upgraded in place with `Unreviewed` backfilled for older findings.
+
+To reset review state completely:
+
+```bash
+docker compose down -v
+docker compose up --build
+```
+
 ## Tests
 
 Backend tests focus on HTTP behavior and guardrails (TDD, vertical slices). Run with `pytest` in `backend/`.

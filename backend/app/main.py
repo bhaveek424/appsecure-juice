@@ -6,6 +6,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from app.db import init_db
 from app.dependencies import dependency_status, overall_status
 from app.routes import config as config_routes
+from app.routes import findings as findings_routes
 from app.routes import scans as scans_routes
 
 
@@ -26,6 +27,7 @@ app.add_middleware(
 
 app.include_router(config_routes.router)
 app.include_router(scans_routes.router)
+app.include_router(findings_routes.router)
 
 
 @app.get("/health")

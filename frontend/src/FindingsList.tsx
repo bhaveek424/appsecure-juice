@@ -5,11 +5,16 @@ import { SEVERITY_ORDER } from "./api";
 type Props = {
   findings: Finding[];
   findingCounts?: FindingCounts;
+  onSelectFinding?: (findingId: string) => void;
 };
 
 type SortKey = "severity" | "title" | "endpoint";
 
-export default function FindingsList({ findings, findingCounts }: Props) {
+export default function FindingsList({
+  findings,
+  findingCounts,
+  onSelectFinding,
+}: Props) {
   const [sortKey, setSortKey] = useState<SortKey>("severity");
 
   const sortedFindings = useMemo(() => {
@@ -67,19 +72,21 @@ export default function FindingsList({ findings, findingCounts }: Props) {
 
       <ul className="findings-list">
         {sortedFindings.map((finding) => (
-          <li key={finding.id} className={`finding severity-${finding.severity.toLowerCase()}`}>
-            <div className="finding-header">
-              <span className="finding-source">{finding.source}</span>
-              <span className="finding-severity">{finding.severity}</span>
-              <strong>{finding.title}</strong>
-            </div>
-            <p className="finding-category">{finding.category}</p>
-            <p className="finding-endpoint">{finding.endpoint}</p>
-            <p>{finding.description}</p>
-            <p className="finding-remediation">{finding.remediation}</p>
-            {finding.evidence_excerpt && (
-              <pre className="finding-evidence">{finding.evidence_excerpt}</pre>
-            )}
+          <li key={finding.id}>
+            <button
+              type="button"
+              className={`finding finding-button severity-${finding.severity.toLowerCase()}`}
+              onClick={() => onSelectFinding?.(finding.id)}
+            >
+              <div className="finding-header">
+                <span className="finding-source">{finding.source}</span>
+                <span className="finding-severity">{finding.severity}</span>
+                <span className="finding-disposition">{finding.disposition}</span>
+                <strong>{finding.title}</strong>
+              </div>
+              <p className="finding-category">{finding.category}</p>
+              <p className="finding-endpoint">{finding.endpoint}</p>
+            </button>
           </li>
         ))}
       </ul>

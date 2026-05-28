@@ -209,11 +209,58 @@ dd {
   gap: 0.85rem;
 }
 
-.finding {
+.finding,
+.finding-button {
   border: 1px solid #243044;
   border-radius: 10px;
   padding: 0.85rem 1rem;
   background: #0f1419;
+}
+
+.finding-button {
+  width: 100%;
+  text-align: left;
+  color: inherit;
+  font: inherit;
+  cursor: pointer;
+}
+
+.finding-button:hover {
+  border-color: #6ee7a8;
+}
+
+.finding-disposition {
+  font-size: 0.72rem;
+  color: #a8b6cc;
+}
+
+.secondary-button {
+  border: 1px solid #243044;
+  border-radius: 8px;
+  padding: 0.55rem 1rem;
+  font: inherit;
+  color: #e8edf5;
+  background: #151c27;
+  cursor: pointer;
+}
+
+.finding-detail-panel {
+  margin-top: 1rem;
+}
+
+.finding-detail-panel select {
+  margin-right: 0.75rem;
+  background: #0f1419;
+  color: #e8edf5;
+  border: 1px solid #243044;
+  border-radius: 6px;
+  padding: 0.35rem 0.5rem;
+}
+
+.scanner-detail {
+  margin-top: 1rem;
+  padding-top: 1rem;
+  border-top: 1px solid #243044;
 }
 
 .finding-header {

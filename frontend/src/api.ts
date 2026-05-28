@@ -25,6 +25,16 @@ export type ScanSummary = {
   finding_counts: FindingCounts;
 };
 
+export const REVIEW_DISPOSITIONS = [
+  "Unreviewed",
+  "True Positive",
+  "False Positive",
+  "Duplicate",
+  "Needs Investigation",
+] as const;
+
+export type ReviewDisposition = (typeof REVIEW_DISPOSITIONS)[number];
+
 export type Finding = {
   id: string;
   source: string;
@@ -37,6 +47,20 @@ export type Finding = {
   confidence: string | null;
   evidence_excerpt: string | null;
   discovered_at: string;
+  disposition: ReviewDisposition;
+};
+
+export type ScannerFindingDetail = {
+  alert: string;
+  description: string;
+  remediation: string;
+  confidence: string | null;
+  evidence_excerpt: string | null;
+};
+
+export type FindingDetail = Finding & {
+  review_run_id: string;
+  scanner: ScannerFindingDetail | null;
 };
 
 export const SEVERITY_ORDER: Record<string, number> = {
@@ -79,6 +103,17 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
   return response.json() as Promise<T>;
 }
 
+async function requestJson<T>(
+  path: string,
+  init?: RequestInit,
+): Promise<T> {
+  const headers = new Headers(init?.headers);
+  if (init?.body && !headers.has("Content-Type")) {
+    headers.set("Content-Type", "application/json");
+  }
+  return request<T>(path, { ...init, headers });
+}
+
 export function fetchConfig(): Promise<BackendConfig> {
   return request<BackendConfig>("/api/config");
 }
@@ -103,4 +138,21 @@ export function createScan(): Promise<{ id: string }> {
 
 export function isActiveReviewRun(status: string): boolean {
   return ACTIVE_REVIEW_RUN_STATUSES.has(status);
+}
+
+export function getFindingDetail(
+  scanId: string,
+  findingId: string,
+): Promise<FindingDetail> {
+  return request<FindingDetail>(`/api/scans/${scanId}/findings/${findingId}`);
+}
+
+export function updateFindingDisposition(
+  findingId: string,
+  disposition: ReviewDisposition,
+): Promise<{ id: string; disposition: ReviewDisposition }> {
+  return requestJson(`/api/findings/${findingId}/disposition`, {
+    method: "PATCH",
+    body: JSON.stringify({ disposition }),
+  });
 }

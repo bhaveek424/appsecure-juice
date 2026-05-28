@@ -10,12 +10,12 @@ Add the reviewer workflow for inspecting a Finding and assigning a Review Dispos
 
 ## Acceptance criteria
 
-- [ ] `GET /api/scans/:id/findings/:finding_id` returns full Finding detail.
-- [ ] `PATCH /api/findings/:id/disposition` persists one of Unreviewed, True Positive, False Positive, Duplicate, or Needs Investigation.
-- [ ] Frontend opens a Finding detail view from the unified Findings list.
-- [ ] ZAP Finding details include alert metadata, description, remediation, confidence, and evidence excerpt.
-- [ ] Frontend allows changing Review Disposition and reflects the saved value after refresh.
-- [ ] Backend tests cover disposition persistence and invalid disposition rejection.
+- [x] `GET /api/scans/:id/findings/:finding_id` returns full Finding detail.
+- [x] `PATCH /api/findings/:id/disposition` persists one of Unreviewed, True Positive, False Positive, Duplicate, or Needs Investigation.
+- [x] Frontend opens a Finding detail view from the unified Findings list.
+- [x] ZAP Finding details include alert metadata, description, remediation, confidence, and evidence excerpt.
+- [x] Frontend allows changing Review Disposition and reflects the saved value after refresh.
+- [x] Backend tests cover disposition persistence and invalid disposition rejection.
 
 ## Blocked by
 

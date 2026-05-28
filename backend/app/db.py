@@ -55,8 +55,11 @@ def get_session_factory() -> sessionmaker[Session]:
 
 def init_db() -> None:
     import app.models  # noqa: F401
+    from app.migrations import migrate_sqlite_schema
 
-    Base.metadata.create_all(bind=get_engine())
+    engine = get_engine()
+    Base.metadata.create_all(bind=engine)
+    migrate_sqlite_schema(engine)
 
 
 def get_db() -> Generator[Session, None, None]:

@@ -2,6 +2,7 @@ from fastapi import APIRouter, BackgroundTasks, Body, Depends, HTTPException, st
 from sqlalchemy.orm import Session
 
 from app.db import get_db
+from app.schemas.findings import FindingDetail
 from app.schemas.scans import (
     ActiveRunConflict,
     CreateScanRequest,
@@ -9,6 +10,7 @@ from app.schemas.scans import (
     ScanDetail,
     ScanSummary,
 )
+from app.services import findings as finding_service
 from app.services import review_runs as review_run_service
 
 router = APIRouter(prefix="/api/scans", tags=["scans"])
@@ -59,4 +61,22 @@ def get_scan(review_run_id: str, db: Session = Depends(get_db)):
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="Review Run not found",
+        ) from exc
+
+
+@router.get(
+    "/{review_run_id}/findings/{finding_id}",
+    response_model=FindingDetail,
+)
+def get_scan_finding(
+    review_run_id: str,
+    finding_id: str,
+    db: Session = Depends(get_db),
+):
+    try:
+        return finding_service.get_finding_for_run(db, review_run_id, finding_id)
+    except finding_service.FindingNotFoundError as exc:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Finding not found",
         ) from exc

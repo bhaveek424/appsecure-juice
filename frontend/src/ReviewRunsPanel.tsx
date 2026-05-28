@@ -7,6 +7,7 @@ import {
   type ScanDetail,
   type ScanSummary,
 } from "./api";
+import FindingDetailPanel from "./FindingDetailPanel";
 import FindingsList from "./FindingsList";
 
 const SCAN_POLL_MS = 3_000;
@@ -38,9 +39,13 @@ export default function ReviewRunsPanel({ backendReady }: Props) {
   const [loading, setLoading] = useState(true);
   const [starting, setStarting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [selectedFindingId, setSelectedFindingId] = useState<string | null>(
+    null,
+  );
 
   const activeSummary = history.find((run) => isActiveReviewRun(run.status));
   const activeRun = activeDetail ?? activeSummary ?? null;
+  const activeScanId = activeDetail?.id ?? activeSummary?.id;
 
   const refresh = useCallback(async () => {
     const runs = await listScans();
@@ -160,9 +165,19 @@ export default function ReviewRunsPanel({ backendReady }: Props) {
             <FindingsList
               findings={activeDetail.findings}
               findingCounts={activeSummary?.finding_counts}
+              onSelectFinding={setSelectedFindingId}
             />
           )}
         </div>
+      )}
+
+      {activeScanId && selectedFindingId && (
+        <FindingDetailPanel
+          scanId={activeScanId}
+          findingId={selectedFindingId}
+          onClose={() => setSelectedFindingId(null)}
+          onUpdated={refresh}
+        />
       )}
 
       <div className="scan-history">
