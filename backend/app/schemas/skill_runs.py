@@ -37,3 +37,7 @@ class SkillRunResponse(BaseModel):
 
 class RunSkillResponse(BaseModel):
     skill_run: SkillRunResponse
+
+
+class RunRecommendedSkillsResponse(BaseModel):
+    skill_runs: list[SkillRunResponse]

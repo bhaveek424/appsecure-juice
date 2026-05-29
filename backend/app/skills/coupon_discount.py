@@ -12,6 +12,7 @@ from app.models.finding import Finding
 from app.models.review_run import ReviewRun
 from app.models.skill_run import SkillRun
 from app.services.actors import ensure_review_run_actors
+from app.services.cancellation import ensure_not_cancelled
 from app.skills.coupon_logic import (
     coupon_reuse_violation_detected,
     cross_actor_coupon_violation_detected,
@@ -202,6 +203,7 @@ def run_coupon_and_discount_skill(
     target_client: TargetClient,
 ) -> None:
     actors = ensure_review_run_actors(db, review_run.id, target_client)
+    ensure_not_cancelled(db, review_run.id)
     user_a = target_client.login(
         actors[ActorContext.USER_A].email,
         actors[ActorContext.USER_A].password,
@@ -222,25 +224,30 @@ def run_coupon_and_discount_skill(
         valid_coupon,
         scenario="Initial valid coupon application",
     )
+    ensure_not_cancelled(db, review_run.id)
     second_apply = target_client.probe_apply_coupon(
         user_a,
         user_a.basket_id,
         valid_coupon,
         scenario="Repeat valid coupon application",
     )
+    ensure_not_cancelled(db, review_run.id)
     cross_actor_apply = target_client.probe_apply_coupon(
         user_b,
         user_a.basket_id,
         valid_coupon,
         scenario="Cross-actor coupon application",
     )
+    ensure_not_cancelled(db, review_run.id)
     invalid_apply = target_client.probe_apply_coupon(
         user_a,
         user_a.basket_id,
         invalid_coupon,
         scenario="Invalid coupon application",
     )
+    ensure_not_cancelled(db, review_run.id)
 
+    ensure_not_cancelled(db, review_run.id)
     evaluations = [
         evaluate_coupon_reuse_probe(first_apply, second_apply),
         evaluate_cross_actor_coupon_probe(

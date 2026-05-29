@@ -11,6 +11,7 @@ from app.models.finding import Finding
 from app.models.review_run import ReviewRun
 from app.models.skill_run import SkillRun
 from app.services.actors import ensure_review_run_actors
+from app.services.cancellation import ensure_not_cancelled
 from app.skills.basket_boundary import cross_actor_basket_access_detected
 from app.target.types import ProbeCapture, TargetClient
 
@@ -75,6 +76,7 @@ def run_account_boundary_skill(
     target_client: TargetClient,
 ) -> None:
     actors = ensure_review_run_actors(db, review_run.id, target_client)
+    ensure_not_cancelled(db, review_run.id)
     user_a = target_client.login(
         actors[ActorContext.USER_A].email,
         actors[ActorContext.USER_A].password,
@@ -85,8 +87,10 @@ def run_account_boundary_skill(
         actors[ActorContext.USER_B].password,
         ActorContext.USER_B,
     )
+    ensure_not_cancelled(db, review_run.id)
 
     probe = target_client.probe_cross_actor_basket_access(user_b, user_a.basket_id)
+    ensure_not_cancelled(db, review_run.id)
     evaluation = evaluate_cross_actor_basket_probe(probe)
     sanitized = sanitize_probe_capture(probe.to_dict())
     response_excerpt = sanitized["response_body"][:500]

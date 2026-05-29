@@ -9,10 +9,18 @@ from app.domain.review_skill import ReviewSkillId
 from app.domain.skill_run_outcome import SkillRunOutcome
 from app.domain.skill_run_status import SkillRunStatus
 from app.models.evidence_packet import EvidencePacket
+from app.models.hypothesis import Hypothesis
 from app.models.review_run import ReviewRun
 from app.models.skill_run import SkillRun
-from app.schemas.skill_runs import EvidencePacketResponse, RunSkillResponse, SkillRunResponse
+from app.schemas.skill_runs import (
+    EvidencePacketResponse,
+    RunRecommendedSkillsResponse,
+    RunSkillResponse,
+    SkillRunResponse,
+)
+from app.services.cancellation import ensure_not_cancelled
 from app.services.exceptions import (
+    ReviewRunCancelledError,
     ReviewRunNotFoundError,
     ReviewRunNotReadyError,
     UnknownSkillError,
@@ -70,6 +78,59 @@ def _to_skill_run_response(
     )
 
 
+def _completed_skill_ids(db: Session, review_run_id: str) -> set[str]:
+    runs = db.scalars(
+        select(SkillRun.skill_id).where(
+            SkillRun.review_run_id == review_run_id,
+            SkillRun.status == SkillRunStatus.COMPLETED,
+        )
+    ).all()
+    return set(runs)
+
+
+def _recommended_skill_ids(db: Session, review_run_id: str) -> list[str]:
+    hypotheses = db.scalars(
+        select(Hypothesis).where(Hypothesis.review_run_id == review_run_id)
+    ).all()
+    ordered: list[str] = []
+    seen: set[str] = set()
+    for hypothesis in hypotheses:
+        if hypothesis.recommended_skill_id in seen:
+            continue
+        seen.add(hypothesis.recommended_skill_id)
+        ordered.append(hypothesis.recommended_skill_id)
+    return ordered
+
+
+def run_recommended_skills(
+    db: Session, review_run_id: str
+) -> RunRecommendedSkillsResponse:
+    review_run = db.get(ReviewRun, review_run_id)
+    if review_run is None:
+        raise ReviewRunNotFoundError
+
+    if review_run.status != ReviewRunStatus.READY_FOR_SKILLS:
+        raise ReviewRunNotReadyError
+
+    completed = _completed_skill_ids(db, review_run_id)
+    pending = [
+        skill_id
+        for skill_id in _recommended_skill_ids(db, review_run_id)
+        if skill_id not in completed
+    ]
+
+    executed: list[SkillRunResponse] = []
+    for skill_id in pending:
+        ensure_not_cancelled(db, review_run_id)
+        result = run_review_skill(db, review_run_id, skill_id)
+        executed.append(result.skill_run)
+        review_run = db.get(ReviewRun, review_run_id)
+        if review_run is not None and review_run.status == ReviewRunStatus.CANCELLED:
+            break
+
+    return RunRecommendedSkillsResponse(skill_runs=executed)
+
+
 def list_skill_runs_for_run(db: Session, review_run_id: str) -> list[SkillRunResponse]:
     runs = db.scalars(
         select(SkillRun)
@@ -113,7 +174,9 @@ def run_review_skill(
 
     target_client = get_target_client()
     try:
+        ensure_not_cancelled(db, review_run_id)
         run_skill(db, review_run, skill_run, target_client)
+        ensure_not_cancelled(db, review_run_id)
         if skill_run.finding_id:
             skill_run.outcome = SkillRunOutcome.FINDING_CREATED
         else:
@@ -122,6 +185,21 @@ def run_review_skill(
         skill_run.status = SkillRunStatus.COMPLETED
         review_run.status = ReviewRunStatus.READY_FOR_SKILLS
         review_run.current_step = f"{skill_label} Skill complete"
+    except ReviewRunCancelledError:
+        db.rollback()
+        persisted_skill_run = db.get(SkillRun, skill_run.id)
+        if persisted_skill_run is None:
+            raise
+        persisted_skill_run.status = SkillRunStatus.COMPLETED
+        persisted_skill_run.outcome = SkillRunOutcome.INCONCLUSIVE
+        persisted_skill_run.summary = "Review Run cancelled during skill execution"
+        persisted_skill_run.inconclusive_reason = persisted_skill_run.summary
+        persisted_skill_run.completed_at = datetime.now(UTC)
+        db.commit()
+        db.refresh(persisted_skill_run)
+        return RunSkillResponse(
+            skill_run=_to_skill_run_response(db, persisted_skill_run)
+        )
     except Exception:
         skill_run.status = SkillRunStatus.FAILED
         skill_run.outcome = SkillRunOutcome.FAILED

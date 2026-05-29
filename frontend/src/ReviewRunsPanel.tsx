@@ -1,9 +1,12 @@
 import { useCallback, useEffect, useState } from "react";
 import {
+  cancelReviewRun,
   createScan,
   getScan,
   isActiveReviewRun,
+  isCancelledReviewRun,
   listScans,
+  runRecommendedSkills,
   runReviewSkill,
   type ScanDetail,
   type ScanSummary,
@@ -46,23 +49,44 @@ export default function ReviewRunsPanel({ backendReady }: Props) {
     null,
   );
   const [runningSkillId, setRunningSkillId] = useState<string | null>(null);
+  const [runningRecommended, setRunningRecommended] = useState(false);
+  const [cancelling, setCancelling] = useState(false);
+  const [focusedRunId, setFocusedRunId] = useState<string | null>(null);
 
   const activeSummary = history.find((run) => isActiveReviewRun(run.status));
-  const activeRun = activeDetail ?? activeSummary ?? null;
-  const activeScanId = activeDetail?.id ?? activeSummary?.id;
+  const focusedSummary =
+    focusedRunId === null
+      ? null
+      : history.find((run) => run.id === focusedRunId) ?? null;
+  const displayedSummary = activeSummary ?? focusedSummary;
+  const activeRun = activeDetail ?? displayedSummary ?? null;
+  const activeScanId = activeDetail?.id ?? displayedSummary?.id;
 
-  const refresh = useCallback(async () => {
-    const runs = await listScans();
-    setHistory(runs);
+  const refresh = useCallback(
+    async (preferredRunId?: string) => {
+      const runs = await listScans();
+      setHistory(runs);
 
-    const activeSummary = runs.find((run) => isActiveReviewRun(run.status));
-    if (activeSummary) {
-      const detail = await getScan(activeSummary.id);
-      setActiveDetail(detail);
-    } else {
-      setActiveDetail(null);
-    }
-  }, []);
+      const currentActive = runs.find((run) => isActiveReviewRun(run.status));
+      const detailId =
+        currentActive?.id ??
+        preferredRunId ??
+        (focusedRunId !== null && runs.some((run) => run.id === focusedRunId)
+          ? focusedRunId
+          : undefined);
+
+      if (detailId) {
+        const detail = await getScan(detailId);
+        setActiveDetail(detail);
+        if (currentActive) {
+          setFocusedRunId(currentActive.id);
+        }
+      } else {
+        setActiveDetail(null);
+      }
+    },
+    [focusedRunId],
+  );
 
   useEffect(() => {
     if (!backendReady) {
@@ -107,9 +131,10 @@ export default function ReviewRunsPanel({ backendReady }: Props) {
     setError(null);
     try {
       const created = await createScan();
+      setFocusedRunId(created.id);
       const detail = await getScan(created.id);
       setActiveDetail(detail);
-      await refresh();
+      await refresh(created.id);
     } catch (startError) {
       const message =
         startError instanceof Error ? startError.message : "Unknown error";
@@ -120,9 +145,68 @@ export default function ReviewRunsPanel({ backendReady }: Props) {
   }
 
   const startDisabled =
-    !backendReady || starting || activeRun !== null;
+    !backendReady || starting || activeSummary !== null;
 
-  const canRunSkills = activeDetail?.status === "Ready For Skills";
+  async function handleSelectRun(runId: string) {
+    setFocusedRunId(runId);
+    setError(null);
+    try {
+      const detail = await getScan(runId);
+      setActiveDetail(detail);
+    } catch (selectError) {
+      const message =
+        selectError instanceof Error ? selectError.message : "Unknown error";
+      setError(message);
+    }
+  }
+
+  const isCancelled = activeRun
+    ? isCancelledReviewRun(activeRun.status)
+    : false;
+  const canRunSkills =
+    activeDetail?.status === "Ready For Skills" && !isCancelled;
+  const canCancel =
+    activeScanId !== undefined &&
+    activeRun !== null &&
+    isActiveReviewRun(activeRun.status) &&
+    !cancelling;
+
+  async function handleCancelReviewRun() {
+    if (!activeScanId) {
+      return;
+    }
+    setCancelling(true);
+    setError(null);
+    try {
+      await cancelReviewRun(activeScanId);
+      setFocusedRunId(activeScanId);
+      await refresh(activeScanId);
+    } catch (cancelError) {
+      const message =
+        cancelError instanceof Error ? cancelError.message : "Unknown error";
+      setError(message);
+    } finally {
+      setCancelling(false);
+    }
+  }
+
+  async function handleRunRecommendedSkills() {
+    if (!activeScanId) {
+      return;
+    }
+    setRunningRecommended(true);
+    setError(null);
+    try {
+      await runRecommendedSkills(activeScanId);
+      await refresh();
+    } catch (runError) {
+      const message =
+        runError instanceof Error ? runError.message : "Unknown error";
+      setError(message);
+    } finally {
+      setRunningRecommended(false);
+    }
+  }
 
   async function handleRunSkill(skillId: string) {
     if (!activeScanId) {
@@ -160,12 +244,34 @@ export default function ReviewRunsPanel({ backendReady }: Props) {
       {error && <p className="status-bad">{error}</p>}
 
       {activeRun && (
-        <div className="active-run">
-          <h3>Active Review Run</h3>
+        <div
+          className={`active-run${isCancelled ? " active-run-cancelled" : ""}`}
+        >
+          <div className="active-run-header">
+            <h3>{isCancelled ? "Cancelled Review Run" : "Active Review Run"}</h3>
+            {canCancel && (
+              <button
+                type="button"
+                className="danger-button"
+                disabled={cancelling || runningSkillId !== null || runningRecommended}
+                onClick={handleCancelReviewRun}
+              >
+                {cancelling ? "Cancelling…" : "Cancel Review Run"}
+              </button>
+            )}
+          </div>
+          {isCancelled && (
+            <p className="cancelled-note muted">
+              Cancellation is best-effort. Active ZAP and skill work stops between
+              steps when possible.
+            </p>
+          )}
           <dl>
             <div>
               <dt>Status</dt>
-              <dd>{activeRun.status}</dd>
+              <dd className={isCancelled ? "status-cancelled" : undefined}>
+                {activeRun.status}
+              </dd>
             </div>
             <div>
               <dt>Current step</dt>
@@ -190,7 +296,9 @@ export default function ReviewRunsPanel({ backendReady }: Props) {
               hypotheses={activeDetail.hypotheses}
               canRunSkills={canRunSkills}
               runningSkillId={runningSkillId}
+              runningRecommended={runningRecommended}
               onRunSkill={handleRunSkill}
+              onRunRecommended={handleRunRecommendedSkills}
             />
           )}
           {activeDetail && activeDetail.skill_runs.length > 0 && (
@@ -202,7 +310,7 @@ export default function ReviewRunsPanel({ backendReady }: Props) {
           {activeDetail && activeDetail.findings.length > 0 && (
             <FindingsList
               findings={activeDetail.findings}
-              findingCounts={activeSummary?.finding_counts}
+              findingCounts={displayedSummary?.finding_counts}
               onSelectFinding={setSelectedFindingId}
             />
           )}
@@ -226,12 +334,22 @@ export default function ReviewRunsPanel({ backendReady }: Props) {
           <ul>
             {history.map((run) => (
               <li key={run.id}>
-                <span className="run-status">{run.status}</span>
-                <span className="run-step">{run.current_step}</span>
-                <span className="run-time">{formatTimestamp(run.started_at)}</span>
-                <span className="run-findings">
-                  {totalFindings(run.finding_counts)} findings
-                </span>
+                <button
+                  type="button"
+                  className={`history-run-button${
+                    run.id === activeScanId ? " history-run-button-selected" : ""
+                  }`}
+                  onClick={() => handleSelectRun(run.id)}
+                >
+                  <span className="run-status">{run.status}</span>
+                  <span className="run-step">{run.current_step}</span>
+                  <span className="run-time">
+                    {formatTimestamp(run.started_at)}
+                  </span>
+                  <span className="run-findings">
+                    {totalFindings(run.finding_counts)} findings
+                  </span>
+                </button>
               </li>
             ))}
           </ul>

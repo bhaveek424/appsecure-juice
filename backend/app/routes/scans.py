@@ -10,11 +10,13 @@ from app.schemas.scans import (
     ScanDetail,
     ScanSummary,
 )
-from app.schemas.skill_runs import RunSkillResponse
+from app.schemas.skill_runs import RunRecommendedSkillsResponse, RunSkillResponse
+from app.services import cancellation as cancellation_service
 from app.services import findings as finding_service
 from app.services import review_runs as review_run_service
 from app.services import skill_runs as skill_run_service
 from app.services.exceptions import (
+    ReviewRunNotCancellableError,
     ReviewRunNotFoundError,
     ReviewRunNotReadyError,
     UnknownSkillError,
@@ -60,6 +62,22 @@ def list_scans(db: Session = Depends(get_db)):
     return review_run_service.list_review_runs(db)
 
 
+@router.post("/{review_run_id}/cancel", response_model=ScanSummary)
+def cancel_scan(review_run_id: str, db: Session = Depends(get_db)):
+    try:
+        return cancellation_service.cancel_review_run(db, review_run_id)
+    except ReviewRunNotFoundError as exc:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Review Run not found",
+        ) from exc
+    except ReviewRunNotCancellableError as exc:
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail="Review Run cannot be cancelled",
+        ) from exc
+
+
 @router.get("/{review_run_id}", response_model=ScanDetail)
 def get_scan(review_run_id: str, db: Session = Depends(get_db)):
     try:
@@ -68,6 +86,25 @@ def get_scan(review_run_id: str, db: Session = Depends(get_db)):
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="Review Run not found",
+        ) from exc
+
+
+@router.post(
+    "/{review_run_id}/skills/run-recommended",
+    response_model=RunRecommendedSkillsResponse,
+)
+def run_recommended_skills(review_run_id: str, db: Session = Depends(get_db)):
+    try:
+        return skill_run_service.run_recommended_skills(db, review_run_id)
+    except ReviewRunNotFoundError as exc:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Review Run not found",
+        ) from exc
+    except ReviewRunNotReadyError as exc:
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail="Review Run is not ready for Review Skills",
         ) from exc
 
 

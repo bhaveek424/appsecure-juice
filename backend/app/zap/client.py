@@ -22,6 +22,8 @@ class ZapClient(Protocol):
         progress_callback: Callable[[ZapProgress], None],
     ) -> list[dict[str, Any]]: ...
 
+    def stop_active_scans(self) -> None: ...
+
 
 class HttpZapClient:
     def __init__(self) -> None:
@@ -91,6 +93,10 @@ class HttpZapClient:
         alerts_payload = self._get("/JSON/core/view/alerts/", {"baseurl": target_url})
         return list(alerts_payload.get("alerts", []))
 
+    def stop_active_scans(self) -> None:
+        self._get("/JSON/spider/action/stop/")
+        self._get("/JSON/ascan/action/stop/")
+
     def _wait_for_completion(
         self,
         status_path: str,
@@ -123,6 +129,7 @@ class HttpZapClient:
 
 class MockZapClient:
     def __init__(self, alerts: list[dict[str, Any]] | None = None) -> None:
+        self.stop_calls = 0
         self._alerts = alerts or [
             {
                 "alert": "Cross Site Scripting",
@@ -165,3 +172,6 @@ class MockZapClient:
             )
         )
         return list(self._alerts)
+
+    def stop_active_scans(self) -> None:
+        self.stop_calls += 1

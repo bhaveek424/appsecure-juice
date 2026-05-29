@@ -11,14 +11,18 @@ type Props = {
   hypotheses: Hypothesis[];
   canRunSkills?: boolean;
   runningSkillId?: string | null;
+  runningRecommended?: boolean;
   onRunSkill?: (skillId: string) => void;
+  onRunRecommended?: () => void;
 };
 
 export default function ReviewQueue({
   hypotheses,
   canRunSkills = false,
   runningSkillId = null,
+  runningRecommended = false,
   onRunSkill,
+  onRunRecommended,
 }: Props) {
   if (hypotheses.length === 0) {
     return <p className="muted">No Hypotheses yet. Agent Triage runs after ZAP.</p>;
@@ -30,6 +34,16 @@ export default function ReviewQueue({
       <p className="muted queue-lede">
         Hypotheses are speculative leads. Run a recommended Review Skill when ready.
       </p>
+      {canRunSkills && onRunRecommended && (
+        <button
+          type="button"
+          className="primary-button queue-run-recommended"
+          disabled={runningSkillId !== null || runningRecommended}
+          onClick={onRunRecommended}
+        >
+          {runningRecommended ? "Running recommended skills…" : "Run Recommended Skills"}
+        </button>
+      )}
       <ul className="hypotheses-list">
         {hypotheses.map((hypothesis) => (
           <li key={hypothesis.id} className="hypothesis-card">

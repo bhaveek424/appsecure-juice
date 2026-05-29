@@ -11,6 +11,7 @@ from app.models.finding import Finding
 from app.models.review_run import ReviewRun
 from app.models.skill_run import SkillRun
 from app.services.actors import ensure_review_run_actors
+from app.services.cancellation import ensure_not_cancelled
 from app.skills.review_ownership_boundary import (
     cross_actor_review_ownership_bypass_detected,
 )
@@ -85,6 +86,7 @@ def run_review_ownership_skill(
     target_client: TargetClient,
 ) -> None:
     actors = ensure_review_run_actors(db, review_run.id, target_client)
+    ensure_not_cancelled(db, review_run.id)
     user_a_actor = actors[ActorContext.USER_A]
     user_b_actor = actors[ActorContext.USER_B]
 
@@ -98,6 +100,7 @@ def run_review_ownership_skill(
         user_b_actor.password,
         ActorContext.USER_B,
     )
+    ensure_not_cancelled(db, review_run.id)
 
     review_id = target_client.ensure_user_product_review(
         user_a,
@@ -110,6 +113,7 @@ def run_review_ownership_skill(
         review_id,
         USER_B_TAMPER_MESSAGE,
     )
+    ensure_not_cancelled(db, review_run.id)
     evaluation = evaluate_cross_actor_review_probe(
         probe, owner_email=user_a_actor.email
     )

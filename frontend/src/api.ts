@@ -216,6 +216,25 @@ export function runReviewSkill(
   );
 }
 
+export function runRecommendedSkills(
+  scanId: string,
+): Promise<{ skill_runs: SkillRun[] }> {
+  return request<{ skill_runs: SkillRun[] }>(
+    `/api/scans/${scanId}/skills/run-recommended`,
+    { method: "POST" },
+  );
+}
+
+export function cancelReviewRun(scanId: string): Promise<ScanSummary> {
+  return request<ScanSummary>(`/api/scans/${scanId}/cancel`, {
+    method: "POST",
+  });
+}
+
+export function isCancelledReviewRun(status: string): boolean {
+  return status === "Cancelled";
+}
+
 export function updateFindingDisposition(
   findingId: string,
   disposition: ReviewDisposition,

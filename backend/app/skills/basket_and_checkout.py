@@ -11,6 +11,7 @@ from app.models.finding import Finding
 from app.models.review_run import ReviewRun
 from app.models.skill_run import SkillRun
 from app.services.actors import ensure_review_run_actors
+from app.services.cancellation import ensure_not_cancelled
 from app.skills.basket_manipulation import negative_basket_quantity_manipulation_detected
 from app.target.types import ProbeCapture, TargetClient
 
@@ -76,6 +77,7 @@ def run_basket_and_checkout_skill(
     target_client: TargetClient,
 ) -> None:
     actors = ensure_review_run_actors(db, review_run.id, target_client)
+    ensure_not_cancelled(db, review_run.id)
     user_a = target_client.login(
         actors[ActorContext.USER_A].email,
         actors[ActorContext.USER_A].password,
@@ -83,6 +85,7 @@ def run_basket_and_checkout_skill(
     )
 
     probe = target_client.probe_negative_basket_quantity(user_a)
+    ensure_not_cancelled(db, review_run.id)
     evaluation = evaluate_negative_basket_quantity_probe(probe)
     sanitized = sanitize_probe_capture(probe.to_dict())
     response_excerpt = sanitized["response_body"][:500]
