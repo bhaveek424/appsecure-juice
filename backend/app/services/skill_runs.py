@@ -19,6 +19,7 @@ from app.services.exceptions import (
 )
 from app.skills.account_boundary import run_account_boundary_skill
 from app.skills.basket_and_checkout import run_basket_and_checkout_skill
+from app.skills.coupon_discount import run_coupon_and_discount_skill
 from app.skills.review_ownership import run_review_ownership_skill
 from app.target.factory import get_target_client
 from app.target.types import TargetClient
@@ -37,6 +38,10 @@ _SKILL_HANDLERS: dict[ReviewSkillId, tuple[_SkillRunner, str]] = {
     ReviewSkillId.REVIEW_OWNERSHIP: (
         run_review_ownership_skill,
         "Review Ownership",
+    ),
+    ReviewSkillId.COUPON_AND_DISCOUNT: (
+        run_coupon_and_discount_skill,
+        "Coupon And Discount",
     ),
 }
 

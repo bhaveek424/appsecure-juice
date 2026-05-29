@@ -2,6 +2,7 @@ import httpx
 
 from app.config import get_settings
 from app.domain.actor_context import ActorContext
+from app.skills.coupon_logic import coupon_apply_path
 from app.target.types import AuthenticatedActor, ProbeCapture
 
 
@@ -185,6 +186,33 @@ class HttpTargetClient:
             scenario="Cross-actor review edit",
             actor_context=actor.actor_context,
             request_method="PATCH",
+            request_path=path,
+            request_headers=headers,
+            response_status=response.status_code,
+            response_headers=dict(response.headers),
+            response_body=response.text[:2000],
+        )
+
+    def probe_apply_coupon(
+        self,
+        actor: AuthenticatedActor,
+        basket_id: int,
+        coupon_code: str,
+        *,
+        scenario: str,
+    ) -> ProbeCapture:
+        headers = {
+            "Authorization": f"Bearer {actor.token}",
+            "Accept": "application/json",
+        }
+        path = coupon_apply_path(basket_id, coupon_code)
+        with httpx.Client(timeout=30.0) as client:
+            response = client.put(f"{self._base_url}{path}", headers=headers)
+
+        return ProbeCapture(
+            scenario=scenario,
+            actor_context=actor.actor_context,
+            request_method="PUT",
             request_path=path,
             request_headers=headers,
             response_status=response.status_code,

@@ -63,4 +63,17 @@ class MockReasoningClient:
                 priority="Medium",
                 source_observations=refs[:1],
             ),
+            TriageHypothesisResult(
+                title="Coupon reuse or cross-account discount application may be possible",
+                rationale=(
+                    "Promotional endpoints should enforce one-time redemption and "
+                    "basket ownership. Probe bounded reuse and cross-actor coupon flows."
+                ),
+                recommended_skill_id=ReviewSkillId.COUPON_AND_DISCOUNT,
+                recommended_skill_name=REVIEW_SKILL_NAMES[
+                    ReviewSkillId.COUPON_AND_DISCOUNT
+                ],
+                priority="Medium",
+                source_observations=refs[:1],
+            ),
         ]

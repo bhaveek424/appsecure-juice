@@ -66,3 +66,12 @@ class TargetClient(Protocol):
         review_id: str,
         new_message: str,
     ) -> ProbeCapture: ...
+
+    def probe_apply_coupon(
+        self,
+        actor: AuthenticatedActor,
+        basket_id: int,
+        coupon_code: str,
+        *,
+        scenario: str,
+    ) -> ProbeCapture: ...

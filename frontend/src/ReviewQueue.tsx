@@ -4,6 +4,7 @@ const RUNNABLE_SKILLS: Record<string, string> = {
   "account-boundary": "Run Account Boundary Skill",
   "basket-and-checkout": "Run Basket And Checkout Skill",
   "review-ownership": "Run Review Ownership Skill",
+  "coupon-and-discount": "Run Coupon And Discount Skill",
 };
 
 type Props = {
