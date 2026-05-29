@@ -1,5 +1,10 @@
 import type { Hypothesis } from "./api";
 
+const RUNNABLE_SKILLS: Record<string, string> = {
+  "account-boundary": "Run Account Boundary Skill",
+  "coupon-and-discount": "Run Coupon And Discount Skill",
+};
+
 type Props = {
   hypotheses: Hypothesis[];
   canRunSkills?: boolean;
@@ -44,7 +49,7 @@ export default function ReviewQueue({
             )}
             {canRunSkills &&
               onRunSkill &&
-              hypothesis.recommended_skill_id === "account-boundary" && (
+              hypothesis.recommended_skill_id in RUNNABLE_SKILLS && (
                 <button
                   type="button"
                   className="primary-button"
@@ -53,7 +58,7 @@ export default function ReviewQueue({
                 >
                   {runningSkillId === hypothesis.recommended_skill_id
                     ? "Running…"
-                    : "Run Account Boundary Skill"}
+                    : RUNNABLE_SKILLS[hypothesis.recommended_skill_id]}
                 </button>
               )}
           </li>

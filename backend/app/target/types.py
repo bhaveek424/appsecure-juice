@@ -46,3 +46,12 @@ class TargetClient(Protocol):
         actor: AuthenticatedActor,
         other_basket_id: int,
     ) -> ProbeCapture: ...
+
+    def probe_apply_coupon(
+        self,
+        actor: AuthenticatedActor,
+        basket_id: int,
+        coupon_code: str,
+        *,
+        scenario: str,
+    ) -> ProbeCapture: ...
