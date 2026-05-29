@@ -6,6 +6,7 @@ import {
   type FindingDetail,
   type ReviewDisposition,
 } from "./api";
+import { ErrorBanner, LoadingState } from "./components/WorkbenchState";
 
 type Props = {
   scanId: string;
@@ -87,10 +88,12 @@ export default function FindingDetailPanel({
         </button>
       </div>
 
-      {loading && <p>Loading finding…</p>}
-      {error && <p className="status-bad">{error}</p>}
+      {loading && <LoadingState label="Loading Finding detail…" />}
+      {error && (
+        <ErrorBanner title="Could not load Finding detail" message={error} />
+      )}
 
-      {detail && (
+      {detail && !loading && (
         <>
           <dl>
             <div>
@@ -111,9 +114,10 @@ export default function FindingDetailPanel({
             </div>
             <div>
               <dt>Review Disposition</dt>
-              <dd>
+              <dd className="disposition-controls">
                 <select
                   value={disposition}
+                  disabled={saving}
                   onChange={(event) =>
                     setDisposition(event.target.value as ReviewDisposition)
                   }
@@ -130,7 +134,7 @@ export default function FindingDetailPanel({
                   disabled={saving || disposition === detail.disposition}
                   onClick={handleSave}
                 >
-                  {saving ? "Saving…" : "Save disposition"}
+                  {saving ? "Saving Review Disposition…" : "Save Review Disposition"}
                 </button>
               </dd>
             </div>
@@ -186,7 +190,7 @@ export default function FindingDetailPanel({
 
           {detail.scanner && (
             <div className="scanner-detail">
-              <h3>Scanner evidence</h3>
+              <h3>Scanner Finding evidence</h3>
               <dl>
                 <div>
                   <dt>Alert</dt>

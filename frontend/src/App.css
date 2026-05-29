@@ -96,6 +96,89 @@ dd {
   margin: 0 0 1rem;
 }
 
+.active-run-failed {
+  border-color: #5c2d2d;
+}
+
+.workbench-state {
+  margin: 0.75rem 0;
+}
+
+.workbench-empty h4 {
+  margin: 0 0 0.35rem;
+  font-size: 0.95rem;
+}
+
+.workbench-error strong {
+  display: block;
+  margin-bottom: 0.35rem;
+}
+
+.workbench-error p {
+  margin: 0;
+}
+
+.active-run-context-banner {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  margin: 0 0 1rem;
+  padding: 0.75rem 1rem;
+  border: 1px solid #3b4f6b;
+  border-radius: 8px;
+  background: #1c2533;
+}
+
+.active-run-context-banner p {
+  margin: 0;
+}
+
+.run-badge {
+  margin-left: 0.5rem;
+  padding: 0.1rem 0.4rem;
+  border-radius: 4px;
+  font-size: 0.7rem;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  background: #1e3a2f;
+  color: #6ee7a8;
+}
+
+.history-run-button-active {
+  border-color: #2d5a45;
+}
+
+.findings h4,
+.review-queue h4,
+.skill-runs h4 {
+  margin: 1.25rem 0 0.5rem;
+  font-size: 0.95rem;
+}
+
+.findings-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem 1rem;
+  align-items: center;
+  margin-bottom: 1rem;
+}
+
+.findings-toolbar label {
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: #7b8da6;
+}
+
+.disposition-controls {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  align-items: center;
+}
+
 .queue-run-recommended {
   margin-bottom: 1rem;
 }
@@ -245,13 +328,6 @@ dd {
 .severity-pill.informational {
   background: #243044;
   color: #cbd5e1;
-}
-
-.findings-toolbar {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  margin-bottom: 0.75rem;
 }
 
 .findings-toolbar select {

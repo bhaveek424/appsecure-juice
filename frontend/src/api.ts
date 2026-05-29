@@ -157,7 +157,9 @@ export type HealthResponse = {
 async function request<T>(path: string, init?: RequestInit): Promise<T> {
   const response = await fetch(`${apiBase}${path}`, init);
   if (!response.ok) {
-    throw new Error(`Request failed: ${response.status}`);
+    const detail = await response.text();
+    const suffix = detail ? `: ${detail}` : "";
+    throw new Error(`Request failed (${response.status}) for ${path}${suffix}`);
   }
   return response.json() as Promise<T>;
 }

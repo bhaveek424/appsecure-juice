@@ -5,6 +5,7 @@ import {
   type BackendConfig,
   type HealthResponse,
 } from "./api";
+import { LoadingState } from "./components/WorkbenchState";
 import ReviewRunsPanel from "./ReviewRunsPanel";
 import "./App.css";
 
@@ -81,10 +82,12 @@ export default function App() {
 
       <section className="panel">
         <h2>Backend</h2>
-        {state.kind === "loading" && <p>Checking connectivity…</p>}
+        {state.kind === "loading" && (
+          <LoadingState label="Loading backend configuration…" />
+        )}
         {state.kind === "error" && (
-          <p className="status-bad">
-            Unreachable — {state.message}. Retrying…
+          <p className="status-bad" role="alert">
+            Backend unreachable — {state.message}. Retrying…
           </p>
         )}
         {state.kind === "ready" && (
